@@ -1,15 +1,22 @@
 fun main() {
-    fun part1(input: List<String>): Int {
-        return input.size
+
+    fun readInput(name: String) = readText(name).splitToSequence("\n\n")
+        .map { it.lineSequence().map(String::toInt) }
+
+    // Time - O(N), Space - O(1)
+    //   where N is number of Elves
+    fun part1(elves: Sequence<Sequence<Int>>): Int = elves.maxOf { it.sum() }
+
+    // Time - O(N*log(N)), Space - O(N)
+    fun part2(elves: Sequence<Sequence<Int>>): Int {
+        return elves.map { it.sum() }
+            .sortedDescending()
+            .take(3)
+            .sum()
     }
 
-    fun part2(input: List<String>): Int {
-        return input.size
-    }
-
-    // test if implementation meets criteria from the description, like:
     val testInput = readInput("Day01_test")
-    check(part1(testInput) == 1)
+    check(part1(testInput) == 24000)
 
     val input = readInput("Day01")
     println(part1(input))
