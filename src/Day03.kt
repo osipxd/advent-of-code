@@ -3,7 +3,8 @@ fun main() {
     fun readInput(name: String) = readLines(name).asSequence()
 
     // Common function to solve both part one and two.
-    // Time - O(N), Space - O(1)
+    // Time - O(N*M), Space - O(1)
+    //   where N - number of lines, M - number of chars in the lines
     fun Sequence<List<String>>.sumOfPriorities(): Int {
         // 1. Convert strings in group to Sets of chars and find intersection of these sets
         // 2. Calculate priorities and it's sum
