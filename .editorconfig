@@ -1,4 +1,10 @@
 root = true
 
+[*]
+indent_size = 2
+
+[*.kt]
+indent_size = 4
+
 [*.txt]
 insert_final_newline = false
