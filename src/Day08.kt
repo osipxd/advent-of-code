@@ -4,19 +4,15 @@ fun main() {
     val testInput = readInput("Day08_test")
     val input = readInput("Day08")
 
-    println("=== Part 1 ===")
-    part1(testInput).let {
-        println("Test: $it")
-        check(it == 21)
+    "Part 1" {
+        part1(testInput) shouldBe 21
+        answer(part1(input))
     }
-    println("Answer: " + part1(input))
 
-    println("\n=== Part 2 ===")
-    part2(testInput).let {
-        println("Test: $it")
-        check(it == 8)
+    "Part 2" {
+        part2(testInput) shouldBe 8
+        answer(part2(input))
     }
-    println("Answer: " + part2(input))
 }
 
 private fun part1(forest: Forest): Int {
