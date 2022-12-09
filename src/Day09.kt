@@ -1,147 +1,78 @@
+import kotlin.math.absoluteValue
+import kotlin.math.sign
+
 fun main() {
-    val testInput = readInput("Day09_test")
-    val testInput2 = readInput("Day09_test2")
     val input = readInput("Day09")
 
     "Part 1" {
+        val testInput = readInput("Day09_test1")
         part1(testInput) shouldBe 13
         answer(part1(input))
     }
 
     "Part 2" {
-        part2(testInput2) shouldBe 36
+        val testInput = readInput("Day09_test2")
+        part2(testInput) shouldBe 36
         answer(part2(input))
     }
 }
 
-private fun part1(input: List<Pair<String, Int>>): Int {
-    var headPosition = 0 to 0
-    var tailPosition = 0 to 0
+private fun part1(input: List<Pair<Command, Int>>): Int = simulateRope(length = 1, input)
+private fun part2(input: List<Pair<Command, Int>>): Int = simulateRope(length = 9, input)
 
-    val visited = mutableSetOf(tailPosition)
-    for ((command, value) in input) {
-        var (hx, hy) = headPosition
-        var (tx, ty) = tailPosition
+// Time - `O(M)`, Space - `O(L + V)`, where
+//   M - number of total moves (sum of all command arguments)
+//   L - rope length (including head)
+//   V - number of points visited by tail
+private fun simulateRope(length: Int, commands: List<Pair<Command, Int>>): Int {
+    // length + head
+    val positions = Array(length + 1) { 0 to 0 }
 
-        repeat(value) {
-            when (command) {
-                "R" -> {
-                    hx++
-                    val diff = hx - tx
-                    if (diff > 1) {
-                        tx++
-                        if (hy != ty) ty = hy
-                    }
-                }
-
-                "L" -> {
-                    hx--
-                    val diff = tx - hx
-                    if (diff > 1) {
-                        tx--
-                        if (hy != ty) ty = hy
-                    }
-                }
-
-                "D" -> {
-                    hy--
-                    val diff = ty - hy
-                    if (diff > 1) {
-                        ty--
-                        if (tx != hx) tx = hx
-                    }
-                }
-
-                "U" -> {
-                    hy++
-                    val diff = hy - ty
-                    if (diff > 1) {
-                        ty++
-                        if (tx != hx) tx = hx
-                    }
-                }
-            }
-            visited.add(tx to ty)
-        }
-
-        headPosition = (hx to hy)
-        tailPosition = (tx to ty)
-    }
-
-    return visited.size
-}
-
-private fun part2(input: List<Pair<String, Int>>): Int {
-    val positions = Array(10) { 0 to 0 }
-
+    // Here we will track coordinates visited by tail
     val visited = mutableSetOf(positions.last())
 
-    for ((command, value) in input) {
-        println("== $command $value ==")
+    for ((command, times) in commands) {
+        // I don't know how to simulate all moves once, so let's do it step-by-step
+        repeat(times) {
+            // Move head
+            positions[0] = command.apply(positions[0])
 
-        repeat(value) {
-            var (hx, hy) = positions.first()
-            when (command) {
-                "R" -> hx++
-                "L" -> hx--
-                "U" -> hy++
-                "D" -> hy--
-            }
-            positions[0] = hx to hy
-
+            // Simulate tail moves
             for (i in 1..positions.lastIndex) {
-                val (hx, hy) = positions[i - 1]
-                var (tx, ty) = positions[i]
+                val (headR, headC) = positions[i - 1]
+                var (r, c) = positions[i]
 
-                val dx = hx - tx
-                val dy = hy - ty
+                val diffR = headR - r
+                val diffC = headC - c
 
-                when {
-                    dx > 1 -> {
-                        tx++
-                        if (dy > 0) ty++ else if (dy < 0) ty--
-                    }
-
-                    dx < -1 -> {
-                        tx--
-                        if (dy > 0) ty++ else if (dy < 0) ty--
-                    }
-
-                    dy < -1 -> {
-                        ty--
-                        if (dx > 0) tx++ else if (dx < 0) tx--
-                    }
-
-                    dy > 1 -> {
-                        ty++
-                        if (dx > 0) tx++ else if (dx < 0) tx--
-                    }
+                // If head moved too far, let's move closer to it
+                // According the rules, we always try to make closer both row and column
+                if (diffR.absoluteValue > 1 || diffC.absoluteValue > 1) {
+                    r += diffR.sign
+                    c += diffC.sign
                 }
 
-                positions[i] = tx to ty
+                positions[i] = r to c
             }
 
-            visited.add(positions.last())
+            visited += positions.last()
         }
-        //dump(positions)
     }
 
     return visited.size
-}
-
-private fun dump(positions: Array<Pair<Int, Int>>) {
-    val map = Array(30) { CharArray(30) { '.' } }
-    map[5][11] = 's'
-    for (i in positions.indices.reversed()) {
-        val (x, y) = positions[i]
-        map[y + 5][x + 11] = if (i == 0) 'H' else i.digitToChar()
-    }
-
-    println(map.reversed().joinToString("\n") { it.joinToString(" ") })
-    println()
 }
 
 private fun readInput(name: String) = readLines(name).map {
     val (command, number) = it.split(" ")
-    command to number.toInt()
+    Command.valueOf(command) to number.toInt()
+}
+
+private enum class Command(val dr: Int = 0, val dc: Int = 0) {
+    R(dc = +1), U(dr = +1), L(dc = -1), D(dr = -1);
+
+    /** Returns the next coordinates on this direction. */
+    fun apply(coordinates: Pair<Int, Int>): Pair<Int, Int> {
+        val (r, c) = coordinates
+        return (r + dr) to (c + dc)
+    }
 }
