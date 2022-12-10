@@ -27,7 +27,7 @@ private fun solve(commands: List<List<String>>): Int {
 
         // Part 2
         val isFilled = (cycle - 1) % WIDTH in register - 1..register + 1
-        print(if (isFilled) "#" else ".")
+        print(if (isFilled) "██" else "░░")
         if (cycle % WIDTH == 0) println()
 
         // Finish cycle
