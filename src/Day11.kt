@@ -21,9 +21,9 @@ private fun part1(input: List<Monkey>): Int {
         for ((i, monkey) in input.withIndex()) {
             inspectionsCounts[i] += monkey.items.size
             for (item in monkey.takeItems()) {
-                val new = monkey.operation(item) / 3
-                val target = if (new % monkey.testValue == 0) monkey.ifTrue else monkey.ifFalse
-                input[target].addItem(new)
+                val new = monkey.operation(item.toLong()) / 3
+                val target = if (new % monkey.testValue == 0L) monkey.ifTrue else monkey.ifFalse
+                input[target].addItem(new.toInt())
             }
         }
     }
@@ -33,12 +33,13 @@ private fun part1(input: List<Monkey>): Int {
 
 private fun part2(input: List<Monkey>): Long {
     val inspectionsCounts = LongArray(input.size) { 0 }
+    val mod = input.map { it.testValue.toLong() }.reduce(Long::times)
 
     repeat(10000) { round ->
         for ((i, monkey) in input.withIndex()) {
             inspectionsCounts[i] += monkey.items.size.toLong()
             for (item in monkey.takeItems()) {
-                val new = monkey.operation(item)
+                val new = (monkey.operation(item.toLong()) % mod).toInt()
                 val target = if (new % monkey.testValue == 0) monkey.ifTrue else monkey.ifFalse
                 input[target].addItem(new)
             }
@@ -63,20 +64,19 @@ private fun readInput(name: String) = readText(name).splitToSequence("\n\n").map
     )
 }.toList()
 
-private fun operationOf(operation: String): (Int) -> Int {
+private fun operationOf(operation: String): (Long) -> Long {
     val parts = operation.substringAfter(" = ").split(" ")
-    val (timesA, addA) = if (parts[0] == "old") 1 to 0 else 0 to parts[0].toInt()
-    val (timesB, addB) = if (parts[2] == "old") 1 to 0 else 0 to parts[2].toInt()
+    val (takeOld, b) = if (parts[2] == "old") true to 0L else false to parts[2].toLong()
     return if (parts[1] == "+") {
-        { old: Int -> (old * timesA + addA) + (old * timesB + addB) }
+        { old: Long -> old + if (takeOld) old else b }
     } else {
-        { old: Int -> (old * timesA + addA) * (old * timesB + addB) }
+        { old: Long -> old * if (takeOld) old else b }
     }
 }
 
 private class Monkey(
     startingItems: List<Int>,
-    val operation: (Int) -> Int,
+    val operation: (Long) -> Long,
     val testValue: Int,
     val ifFalse: Int,
     val ifTrue: Int
