@@ -1,5 +1,3 @@
-import java.util.*
-
 fun main() {
     val testInput = readInput("Day13_test")
     val input = readInput("Day13")
@@ -15,88 +13,101 @@ fun main() {
     }
 }
 
-private fun part1(input: List<ListNode>): Int {
+private fun part1(packets: List<Packet>): Int {
     var i = 0
     var sum = 0
 
-    input.chunked(2) { (left, right) ->
+    packets.chunked(2) { (left, right) ->
         i++
-
-        if (left <= right) {
-            sum += i
-        }
+        if (left <= right) sum += i
     }
 
     return sum
 }
 
-private fun part2(input: List<ListNode>): Int {
-    fun divider(value: Int) = ListNode.Multiple(listOf(ListNode.Multiple(listOf(ListNode.Single(value)))))
+private fun part2(packets: List<Packet>): Int {
+    // Shorthand to create divider item in form [[$value]]
+    fun divider(value: Int) = Packet.Complex(Packet.Complex(Packet.Simple(value)))
 
     val dividerA = divider(2)
     val dividerB = divider(6)
 
-    val sorted = (input + listOf(dividerA, dividerB)).sorted()
+    val sortedPackets = (packets + listOf(dividerA, dividerB)).sorted()
 
-    return (sorted.indexOf(dividerA) + 1) * (sorted.indexOf(dividerB) + 1)
+    return (sortedPackets.binarySearch(dividerA) + 1) * (sortedPackets.binarySearch(dividerB) + 1)
 }
 
-private fun readInput(name: String) = readLines(name).filter { it.isNotEmpty() }.mapNotNull { line ->
-    val value = StringBuilder()
-    val stack = Stack<ListNode?>()
+private fun readInput(name: String) = readLines(name).filter(String::isNotEmpty).map(::eval)
+
+// Sad joke. We have no eval, so let's parse lists!
+private fun eval(line: String): Packet {
+    val number = StringBuilder()
+    val stack = ArrayDeque<Packet?>()
+
+    fun pushNumber() {
+        if (number.isNotEmpty()) {
+            stack.addFirst(Packet.Simple(number.toString().toInt()))
+            number.clear()
+        }
+    }
+
+    fun pushComplexPacket() {
+        val nested = ArrayDeque<Packet>()
+        var current = stack.removeFirst()
+
+        // Remove elements until list start
+        while (current != null) {
+            nested.addFirst(current)
+            current = stack.removeFirst()
+        }
+
+        // Push back nested list
+        stack.addFirst(Packet.Complex(nested))
+    }
 
     for (char in line) {
-        when {
-            char == '[' -> stack.push(null)
-
-            char.isDigit() -> value.append(char)
-
-            else -> {
-                if (value.isNotEmpty()) {
-                    stack.push(ListNode.Single(value.toString().toInt()))
-                    value.clear()
-                }
-
-                if (char == ']') {
-                    val list = mutableListOf<ListNode>()
-                    var last = stack.pop()
-                    while (last != null) {
-                        list += last
-                        last = stack.pop()
-                    }
-
-                    stack.push(ListNode.Multiple(list.reversed()))
-                }
+        when (char) {
+            // We will use `null` as a marker of list start
+            '[' -> stack.addFirst(null)
+            ',' -> pushNumber()
+            ']' -> {
+                pushNumber()
+                pushComplexPacket()
             }
+
+            else -> number.append(char)
         }
     }
 
-    stack.single()
+    return checkNotNull(stack.single())
 }
 
-private sealed interface ListNode : Comparable<ListNode> {
+private sealed interface Packet : Comparable<Packet> {
 
-    class Multiple(val values: List<ListNode>) : ListNode {
-        override fun toString(): String = values.toString()
-    }
-
-    class Single(val value: Int) : ListNode {
+    class Simple(val value: Int) : Packet {
         override fun toString(): String = value.toString()
+
+        override fun compareTo(other: Packet): Int = when (other) {
+            is Simple -> value compareTo other.value
+            is Complex -> Complex(this) compareTo other
+        }
     }
 
-    override fun compareTo(other: ListNode): Int {
-        if (this is Single && other is Single) {
-            return this.value compareTo other.value
+    class Complex(val values: List<Packet>) : Packet {
+        constructor(value: Packet) : this(listOf(value))
+
+        override fun toString(): String = values.toString()
+
+        override fun compareTo(other: Packet): Int {
+            val left = this
+            val right = if (other is Complex) other else Complex(other)
+
+            for (i in 0 until minOf(left.values.size, right.values.size)) {
+                val result = left.values[i] compareTo right.values[i]
+                if (result != 0) return result
+            }
+
+            return left.values.size compareTo right.values.size
         }
-
-        val left = if (this is Multiple) this else Multiple(listOf(this))
-        val right = if (other is Multiple) other else Multiple(listOf(other))
-
-        for (i in 0 until minOf(left.values.size, right.values.size)) {
-            val result = left.values[i] compareTo right.values[i]
-            if (result != 0) return result
-        }
-
-        return left.values.size compareTo right.values.size
     }
 }
