@@ -26,9 +26,9 @@ private const val WIDTH = SAND_SOURCE_COL * 2
 private const val HEIGHT = WIDTH / 2
 
 private fun simulateSandFalling(structures: List<List<List<Int>>>, hasFloor: Boolean): Int {
-    val map = Array(HEIGHT) { Array(WIDTH) { AIR } }
+    val cave = Array(HEIGHT) { Array(WIDTH) { AIR } }
 
-    // Add rock structures from the input to the map
+    // Add rock structures from the input to the cave
     var lastRow = 0
     for (structure in structures) {
         structure
@@ -38,7 +38,7 @@ private fun simulateSandFalling(structures: List<List<List<Int>>>, hasFloor: Boo
                 // Either row, or column will be equal, so we just draw a line, not a square
                 for (row in (from.row..to.row).fixOrder()) {
                     for (col in (from.col..to.col).fixOrder()) {
-                        map[row][col] = ROCK
+                        cave[row][col] = ROCK
                     }
                 }
             }
@@ -47,38 +47,31 @@ private fun simulateSandFalling(structures: List<List<List<Int>>>, hasFloor: Boo
     // Add floor if we need it
     if (hasFloor) {
         lastRow += 2
-        for (col in 0 until WIDTH) map[lastRow][col] = ROCK
+        for (col in 0 until WIDTH) cave[lastRow][col] = ROCK
     }
 
     // Here we will count how many sand blocks have fallen already
     var sandBlocks = 0
 
-    // Simulate sand falling one-by-one
-    while (true) {
-        var row = 0
-        var col = SAND_SOURCE_COL
+    // Simulate sand falling block-by-block
+    var row = 0
+    var col = SAND_SOURCE_COL
+    while (row < lastRow && cave[row][col] == AIR) {
+        when {
+            cave[row + 1][col] == AIR -> row++                // Move down
+            cave[row + 1][col - 1] == AIR -> { row++; col-- } // Move down-left
+            cave[row + 1][col + 1] == AIR -> { row++; col++ } // Move down-right
 
-        // Can we spawn new sand block?
-        if (map[row][col] != AIR) break
+            // It is impossible to move down, so just place sand block here and stop falling
+            else -> {
+                sandBlocks++
+                cave[row][col] = SAND
 
-        while (row < lastRow) {
-            when {
-                map[row + 1][col] == AIR -> Unit      // no-op
-                map[row + 1][col - 1] == AIR -> col-- // move left
-                map[row + 1][col + 1] == AIR -> col++ // move right
-
-                // It is impossible to fall below, so just place sand block here and stop falling
-                else -> {
-                    sandBlocks++
-                    map[row][col] = SAND
-                    break
-                }
+                // Reset row and column to spawn next sand block
+                row = 0
+                col = SAND_SOURCE_COL
             }
-
-            row++
         }
-
-        if (row >= lastRow) break
     }
 
     return sandBlocks
