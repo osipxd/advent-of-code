@@ -32,9 +32,7 @@ private fun part2(packets: List<Packet>): Int {
     val dividerA = divider(2)
     val dividerB = divider(6)
 
-    val sortedPackets = (packets + listOf(dividerA, dividerB)).sorted()
-
-    return (sortedPackets.binarySearch(dividerA) + 1) * (sortedPackets.binarySearch(dividerB) + 1)
+    return (packets.count { it < dividerA } + 1) * (packets.count { it < dividerB } + 2)
 }
 
 private fun readInput(name: String) = readLines(name).filter(String::isNotEmpty).map(::eval)
