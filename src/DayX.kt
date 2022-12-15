@@ -5,12 +5,12 @@ fun main() {
 
     "Part 1" {
         part1(testInput) shouldBe 0
-        answer(part1(input))
+        measureAnswer { part1(input) }
     }
 
     //"Part 2" {
     //    part2(testInput) shouldBe 0
-    //    answer(part2(input))
+    //    measureAnswer { part2(input) }
     //}
 }
 

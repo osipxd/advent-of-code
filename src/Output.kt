@@ -1,3 +1,5 @@
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 /**
  * Usage:
@@ -21,5 +23,12 @@ class PartScope {
 
     fun answer(value: Any?) {
         println("Answer: $value")
+    }
+
+    @OptIn(ExperimentalTime::class)
+    fun measureAnswer(calculate: () -> Any?) {
+        val value: Any?
+        val time = measureTime { value = calculate() }
+        println("Answer: $value (done in $time)")
     }
 }
