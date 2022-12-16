@@ -23,22 +23,22 @@ private fun part1(input: Map<String, Valve>): Int {
 private fun part2(input: Map<String, Valve>): Int {
     val valvesToOpen = input.valuableValves()
 
-    fun combine(rightCount: Int): MutableSet<Pair<Set<String>, Set<String>>> {
-        if (rightCount == 0) return mutableSetOf(valvesToOpen.toSet() to emptySet())
+    fun combinations(size: Int): Sequence<Set<String>> {
+        if (size == 1) return sequenceOf(setOf(valvesToOpen.first()))
 
-        val combinations = combine(rightCount - 1)
-        for ((left, right) in combinations.toList()) {
-            for (moveMe in left) combinations += left - moveMe to right + moveMe
+        return sequence {
+            for (combination in combinations(size - 1)) {
+                for (add in valvesToOpen - combination) {
+                    yield(combination + add)
+                }
+            }
         }
-
-        return combinations
     }
 
     // This can be optimized. Current values:
-    // - 20 combinations for test input (answer at 4th combination)
-    // - 6435 combinations for my input (answer at 259th combination)
-    val combinations = combine(valvesToOpen.size / 2)
-        .dropWhile { (left, right) -> abs(left.size - right.size) > 1 }
+    // - 10 combinations for test input (answer at 4th combination)
+    // - 3003 combinations for my input (answer at 259th combination)
+    val combinations = combinations(valvesToOpen.size / 2).associateWith { valvesToOpen - it }
     println("Total: ${combinations.size}")
 
     val sharedMem = mutableMapOf<List<Any>, Int>()
