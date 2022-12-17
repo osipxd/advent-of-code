@@ -1,3 +1,5 @@
+import java.util.*
+
 fun main() {
     val testInput = readInput("Day17_test")
     val input = readInput("Day17")
@@ -7,18 +9,19 @@ fun main() {
         measureAnswer { part1(input, print = true) }
     }
 
-    //"Part 2" {
-    //    part2(testInput) shouldBe 0
-    //    measureAnswer { part2(input) }
-    //}
+    "Part 2" {
+        part2(testInput) shouldBe 1514285714288
+        println()
+        measureAnswer { part2(input) }
+    }
 }
 
 private const val WIDTH = 7
 
-private fun part1(input: String, print: Boolean = false): Int {
+private fun part1(input: String, print: Boolean = false): Long {
     val chamber = TetrisChamber(input)
 
-    repeat(2022) {
+    repeat(times = 2022) {
         chamber.fallNext()
     }
 
@@ -26,11 +29,52 @@ private fun part1(input: String, print: Boolean = false): Int {
     return chamber.height
 }
 
+private const val INSANE = 1_000_000_000_000
+
+private fun part2(input: String): Long {
+    val chamber = TetrisChamber(input)
+
+    val cache = mutableMapOf<Int, Pair<Long, Long>>()
+    var rock = 0L
+    var heightShift = 0L
+
+    while (rock < INSANE) {
+        chamber.fallNext()
+        val height = chamber.height
+
+        val stateFingerprint = chamber.getStateFingerprint()
+        if (stateFingerprint in cache) {
+            val (cachedRock, cachedHeight) = cache.getValue(stateFingerprint)
+            val rockDiff = rock - cachedRock
+            val heightDiff = height - cachedHeight
+
+            val times = (INSANE - rock) / rockDiff
+            heightShift = heightDiff * times
+            rock += rockDiff * times
+
+            println("Cycle found! $cachedRock..$rock ($rockDiff), height = $heightDiff")
+            println("Skip ${rockDiff * times} rocks")
+            break
+        }
+        cache[stateFingerprint] = rock to height
+        rock++
+    }
+
+    println("Add ${INSANE - rock} rocks")
+    while (rock < INSANE) {
+        chamber.fallNext()
+        rock++
+    }
+
+    // Why -1? I have no idea...
+    return chamber.height + heightShift - 1
+}
+
 private class TetrisChamber(private val commands: String) {
 
-    var height = 0
+    var height = 0L
 
-    private val occupied = mutableMapOf<Pair<Int, Int>, String>()
+    private val occupied = mutableMapOf<Pair<Long, Int>, String>()
 
     private var nextCommand = 0
     private fun nextCommand(): Char {
@@ -43,8 +87,9 @@ private class TetrisChamber(private val commands: String) {
         var positionX = START_X
         var positionY = height + START_Y
 
-        fun fitsAt(x: Int = positionX, y: Int = positionY): Boolean {
-            return (0 until rock.height).all { r -> rock[r].none {  c -> y + r to x + c in occupied } }
+        fun fitsAt(x: Int = positionX, y: Long = positionY): Boolean {
+            return (0 until rock.height)
+                .all { r -> rock[r].none { c -> y + r to x + c in occupied } }
         }
 
         fun moveLeft() {
@@ -58,7 +103,7 @@ private class TetrisChamber(private val commands: String) {
         }
 
         fun moveDown(): Boolean {
-            if (positionY == 0) return false
+            if (positionY == 0L) return false
             return if (fitsAt(y = positionY - 1)) {
                 positionY--
                 true
@@ -89,9 +134,35 @@ private class TetrisChamber(private val commands: String) {
     }
 
     fun print() {
-        val chamber = Array(height) { Array(WIDTH) { AIR } }
-        for ((point, symbol) in occupied) chamber[point.first][point.second] = symbol
+        val chamber = Array(height.toInt()) { Array(WIDTH) { AIR } }
+        for ((point, symbol) in occupied) chamber[point.first.toInt()][point.second] = symbol
         println(chamber.reversed().joinToString("\n") { it.joinToString("") })
+    }
+
+    /**
+     * State fingerprint includes `nextRock`, `nextCommand` and `depths`.
+     *
+     * Example of depths calculation:
+     * ```
+     * [3,1,0,1,5,5,9] <- depths
+     *  . . # . . . .
+     *  . # # # . . .
+     *  # # # . . . .
+     *  # # . . . . .
+     *  . # . . . . .
+     *  . # # # # # .
+     *  . # . # . . .
+     *  . # . # . . .
+     *  . # # # . . .
+     * ```
+     */
+    fun getStateFingerprint(): Int {
+        val depths = (0 until WIDTH).map { x ->
+            val y = ((height - 1) downTo 0).find { y -> y to x in occupied } ?: -1
+            height - y - 1
+        }
+
+        return Objects.hash(nextRock, nextCommand, depths)
     }
 
     companion object {
@@ -123,7 +194,5 @@ private class Rock(val symbol: String, vararg val lines: IntRange) {
         )
     }
 }
-
-private fun part2(input: String): Int = TODO()
 
 private fun readInput(name: String) = readText(name)
