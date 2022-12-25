@@ -22,60 +22,74 @@ private fun part2(input: List<FactoryBlueprint>): Int =
     input.take(3).map { bp -> maxGeodes(bp, time = 32) }.reduce(Int::times)
 
 private fun maxGeodes(blueprint: FactoryBlueprint, time: Int): Int {
-    val seenStates = mutableSetOf<State>()
     val maxBotsInTime = Array(time + 2) { 0 }
 
-    fun maxGeodesFor(state: State): Int {
-        if (state.timeLeft == 0) return state.geodes
-        if (state.geodeBots < maxBotsInTime[state.timeLeft + 1] || state in seenStates) return 0
+    val queue = ArrayDeque<State>()
 
-        seenStates.add(state)
-        maxBotsInTime[state.timeLeft] = maxOf(state.geodeBots, maxBotsInTime[state.timeLeft])
+    val seenStates = mutableSetOf<State>()
+    fun addNextState(state: State) {
+        if (state in seenStates) return
 
-        return maxOf(
-            maxGeodesFor(state.tick()),
-
-            if (state.shouldBuildGeodeBot(blueprint)) {
-                maxGeodesFor(
-                    state.tick(
-                        spendOre = blueprint.geodeBotCostOre,
-                        spendObsidian = blueprint.geodeBotCostObsidian,
-                        newGeodeBots = +1,
-                    )
-                )
-            } else 0,
-
-            if (state.shouldBuildObsidianBot(blueprint)) {
-                maxGeodesFor(
-                    state.tick(
-                        spendOre = blueprint.obsidianBotCostOre,
-                        spendClay = blueprint.obsidianBotCostClay,
-                        newObsidianBots = +1,
-                    )
-                )
-            } else 0,
-
-            if (state.shouldBuildClayBot(blueprint)) {
-                maxGeodesFor(
-                    state.tick(
-                        spendOre = blueprint.clayBotCost,
-                        newClayBots = +1,
-                    )
-                )
-            } else 0,
-
-            if (state.shouldBuildOreBot(blueprint)) {
-                maxGeodesFor(
-                    state.tick(
-                        spendOre = blueprint.oreBotCost,
-                        newOreBots = +1,
-                    )
-                )
-            } else 0
-        )
+        queue.addLast(state)
+        seenStates += state
     }
 
-    return maxGeodesFor(State(time))
+    addNextState(State(time))
+    var maxGeodes = 0
+
+    while (queue.isNotEmpty()) {
+        val state = queue.removeFirst()
+
+        if (state.timeLeft == 0) {
+            maxGeodes = maxOf(maxGeodes, state.geodes)
+            continue
+        }
+
+        if (state.geodeBots < maxBotsInTime[state.timeLeft + 1]) continue
+        maxBotsInTime[state.timeLeft] = maxOf(state.geodeBots, maxBotsInTime[state.timeLeft])
+
+        addNextState(state.tick())
+
+        if (state.shouldBuildGeodeBot(blueprint)) {
+            addNextState(
+                state.tick(
+                    spendOre = blueprint.geodeBotCostOre,
+                    spendObsidian = blueprint.geodeBotCostObsidian,
+                    newGeodeBots = +1,
+                )
+            )
+        }
+
+        if (state.shouldBuildObsidianBot(blueprint)) {
+            addNextState(
+                state.tick(
+                    spendOre = blueprint.obsidianBotCostOre,
+                    spendClay = blueprint.obsidianBotCostClay,
+                    newObsidianBots = +1,
+                )
+            )
+        }
+
+        if (state.shouldBuildClayBot(blueprint)) {
+            addNextState(
+                state.tick(
+                    spendOre = blueprint.clayBotCost,
+                    newClayBots = +1,
+                )
+            )
+        }
+
+        if (state.shouldBuildOreBot(blueprint)) {
+            addNextState(
+                state.tick(
+                    spendOre = blueprint.oreBotCost,
+                    newOreBots = +1,
+                )
+            )
+        }
+    }
+
+    return maxGeodes
 }
 
 private data class State(
