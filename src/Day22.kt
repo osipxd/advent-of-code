@@ -140,14 +140,6 @@ private class Map(
         }
     }
 
-    private fun cubeSide(r: Int, c: Int): Int {
-        return when {
-            r < cubeSize -> 1
-            r in cubeSize until (cubeSize * 2) -> 1 + c / cubeSize
-            else -> 4 + (c - (cubeSize * 2)) / cubeSize
-        }
-    }
-
     private fun stepInDirection(): Boolean {
         val (dr, dc) = directions[direction]
 
@@ -166,90 +158,10 @@ private class Map(
         }
 
         val (newSide, newDirection) = cubeSideNeighbors.getValue(cubeSide to direction)
-        when (direction) {
-            newDirection -> {
-                nextRow = nextRow.mod(cubeSize)
-                nextCol = nextCol.mod(cubeSize)
-            }
+        val wrapped = wrappedCoordinates(cubeRow, cubeCol, newDirection)
+        nextRow = wrapped.first
+        nextCol = wrapped.second
 
-            DIRECTION_RIGHT -> when (newDirection) {
-                DIRECTION_LEFT -> {
-                    nextRow = cubeLastIndex - cubeRow
-                    nextCol = cubeLastIndex
-                }
-
-                DIRECTION_DOWN -> {
-                    nextRow = 0
-                    nextCol = cubeLastIndex - cubeRow
-                }
-
-                DIRECTION_UP -> {
-                    nextRow = cubeLastIndex
-                    nextCol = cubeRow
-                }
-
-                else -> error("Unexpected move $cubeSide -> $newSide")
-            }
-
-            DIRECTION_DOWN -> when (newDirection) {
-                DIRECTION_UP -> {
-                    nextRow = cubeLastIndex
-                    nextCol = cubeLastIndex - cubeCol
-                }
-
-                DIRECTION_RIGHT -> {
-                    nextRow = cubeLastIndex - cubeCol
-                    nextCol = 0
-                }
-
-                DIRECTION_LEFT -> {
-                    nextRow = cubeCol
-                    nextCol = cubeLastIndex
-                }
-
-                else -> error("Unexpected move $cubeSide -> $newSide")
-            }
-
-            DIRECTION_LEFT -> when (newDirection) {
-                DIRECTION_DOWN -> {
-                    nextRow = 0
-                    nextCol = cubeRow
-                }
-
-                DIRECTION_UP -> {
-                    nextRow = cubeLastIndex
-                    nextCol = cubeLastIndex - cubeRow
-                }
-
-                DIRECTION_RIGHT -> {
-                    nextRow = cubeLastIndex - cubeRow
-                    nextCol = 0
-                }
-
-                else -> error("Unexpected move $cubeSide -> $newSide")
-            }
-
-            DIRECTION_UP -> when (newDirection) {
-                DIRECTION_DOWN -> {
-                    nextRow = 0
-                    nextCol = cubeLastIndex - cubeCol
-                }
-
-                DIRECTION_RIGHT -> {
-                    nextRow = cubeCol
-                    nextCol = 0
-                }
-
-                DIRECTION_LEFT -> {
-                    nextRow = cubeLastIndex - cubeCol
-                    nextCol = cubeLastIndex
-                }
-
-                else -> error("Unexpected move $cubeSide -> $newSide")
-            }
-        }
-
-        println(internal[row(nextRow, newSide)].length)
         return if (internal[row(nextRow, newSide)][col(nextCol, newSide)] == AIR) {
             println("$cubeRow,$cubeCol ($cubeSide) -> $nextRow,$nextCol ($newSide)")
 
@@ -263,18 +175,72 @@ private class Map(
         }
     }
 
+    private fun wrappedCoordinates(r: Int, c: Int, newDirection: Int): Pair<Int, Int> {
+        var wrappedR = 0
+        var wrappedC = 0
+
+        // 1. First coordinate. Simply set first row/col for the new direction
+        when (newDirection) {
+            DIRECTION_RIGHT -> wrappedC = 0
+            DIRECTION_DOWN -> wrappedR = 0
+            DIRECTION_LEFT -> wrappedC = cubeLastIndex
+            DIRECTION_UP -> wrappedR = cubeLastIndex
+        }
+
+        // 2. Second coordinate. Tricky logic a bit
+        val orientation = direction.orientation
+        val newOrientation = newDirection.orientation
+
+        when {
+            // Direction not changed, so just use the same row/col depending on orientation
+            direction == newDirection -> when (orientation) {
+                ORIENTATION_HORIZONTAL -> wrappedR = r
+                ORIENTATION_VERTICAL -> wrappedC = c
+            }
+
+            // Direction changed, but orientation the same. Let's invert row/col
+            orientation == newOrientation -> when (orientation) {
+                ORIENTATION_HORIZONTAL -> wrappedR = inverted(r)
+                ORIENTATION_VERTICAL -> wrappedC = inverted(c)
+            }
+
+            // Orientation changed. Let's use row for col or col for row depending on the orientation
+            else -> {
+                // Direction pairs when we should NOT invert coordinate are:
+                //    DOWN (1) <-> LEFT (2), sum = 3
+                //   RIGHT (0) <-> UP   (3), sum = 3
+                val invert = direction + newDirection != 3
+                // Whether should we set row or column? Depends on the orientation
+                when (newOrientation) {
+                    ORIENTATION_VERTICAL -> wrappedC = (if (invert) inverted(r) else r)
+                    ORIENTATION_HORIZONTAL -> wrappedR = (if (invert) inverted(c) else c)
+                }
+            }
+        }
+
+        return wrappedR to wrappedC
+    }
+
+    /** Returns inverted coordinate, starting from the end of the cube. */
+    private fun inverted(coordinate: Int) = cubeLastIndex - coordinate
+
     private fun row(cubeRow: Int, side: CubeSide = cubeSide) = side.row * cubeSize + cubeRow
     private fun col(cubeCol: Int, side: CubeSide = cubeSide) = side.col * cubeSize + cubeCol
 
     companion object {
         const val AIR = '.'
-        const val WALL = '#'
-        const val VOID = ' '
 
         const val DIRECTION_RIGHT = 0
         const val DIRECTION_DOWN = 1
         const val DIRECTION_LEFT = 2
         const val DIRECTION_UP = 3
+
+        const val ORIENTATION_HORIZONTAL = 0
+        const val ORIENTATION_VERTICAL = 1
+
+        // RIGHT (0), LEFT (2) -> HORIZONTAL (0)
+        // DOWN (1), UP (3) -> VERTICAL (3)
+        val Int.orientation: Int get() = this % 2
 
         val directions = listOf(
             0 to +1,
