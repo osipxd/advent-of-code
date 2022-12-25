@@ -12,21 +12,16 @@ fun main() {
 
 private fun part1(input: List<String>): String = input.sumOf { it.snafuToDecimal() }.decimalToSnafu()
 
+private val decimalToSnafu = mapOf('=' to -2, '-' to -1, '0' to 0, '1' to 1, '2' to 2)
+private val snafuDigits = listOf('=', '-', '0', '1', '2')
+
 private fun String.snafuToDecimal(): Long {
     return reversed()
         .withIndex()
-        .sumOf { (i, char) -> char.snafuDigitToDecimal() * (5L pow i) }
-}
-
-private fun Char.snafuDigitToDecimal() = when (this) {
-    '=' -> -2
-    '-' -> -1
-    else -> digitToInt()
+        .sumOf { (i, char) -> decimalToSnafu.getValue(char) * (5L pow i) }
 }
 
 private infix fun Long.pow(other: Int): Long = this.toDouble().pow(other).toLong()
-
-private val snafuDigits = listOf('=', '-', '0', '1', '2')
 
 private fun Long.decimalToSnafu(): String {
     var decimal = this
