@@ -3,7 +3,7 @@ root = true
 [*]
 indent_size = 2
 
-[*.kt]
+[{*.kt,*.kts}]
 indent_size = 4
 
 [*.txt]
