@@ -1,4 +1,6 @@
 .gradle
 .idea
-build
-src/**/*.txt
+*/build
+
+# Do not publish input files
+*/src/**/*.txt
