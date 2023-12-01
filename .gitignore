@@ -3,4 +3,5 @@
 */build
 
 # Do not publish input files
-*/src/**/*.txt
+*/src/**/Day?.txt
+*/src/**/Day??.txt
