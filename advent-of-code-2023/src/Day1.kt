@@ -8,10 +8,16 @@ fun main() {
         measureAnswer { part1(input) }
     }
 
-    "Part 2" {
+    "Part 2 (Regex)" {
         val testInput = readInput("Day${day}_test2")
-        part2(testInput) shouldBe 281
-        measureAnswer { part2(input) }
+        part2Regex(testInput) shouldBe 281
+        measureAnswer { part2Regex(input) }
+    }
+
+    "Part 2 (findAnyOf)" {
+        val testInput = readInput("Day${day}_test2")
+        part2FindAnyOf(testInput) shouldBe 281
+        measureAnswer { part2FindAnyOf(input) }
     }
 }
 
@@ -23,19 +29,45 @@ private fun extractSimpleCalibrationValue(line: String): Int {
     return "$firstDigit$secondDigit".toInt()
 }
 
-private fun part2(input: List<String>): Int = input.sumOf(::extractRealCalibrationValue)
+//////////////////////////////////
 
-private const val DIGITS_REGEX = "one|two|three|four|five|six|seven|eight|nine" 
+private fun part2Regex(input: List<String>): Int = input.sumOf(::extractCalibrationValueWithRegex)
+
+private const val DIGITS_REGEX = "one|two|three|four|five|six|seven|eight|nine"
 private val realDigitRegex = Regex("""\d|$DIGITS_REGEX""")
 private val realDigitRegexReversed = Regex("""\d|${DIGITS_REGEX.reversed()}""")
 
-private fun extractRealCalibrationValue(line: String): Int {
-    val firstDigit = realDigitRegex.find(line)!!.value.digitToInt() * 10
-    val secondDigit = realDigitRegexReversed.find(line.reversed())!!.value.reversed().digitToInt()
-    return firstDigit + secondDigit
+private fun extractCalibrationValueWithRegex(line: String): Int {
+    val firstDigit = realDigitRegex.requireValue(line).digitToInt()
+    val secondDigit = realDigitRegexReversed.requireValue(line.reversed()).reversed().digitToInt()
+    return firstDigit * 10 + secondDigit
 }
 
-private fun String.digitToInt(): Int = when(this) {
+private fun Regex.requireValue(input: String) = requireNotNull(find(input)).value
+
+//////////////////////////////////
+
+private fun part2FindAnyOf(input: List<String>): Int = input.sumOf(::extractCalibrationValueWithFindAnyOf)
+
+private val digits = setOf(
+    "1", "2", "3", "4", "5", "6", "7", "8", "9",
+    "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+)
+
+private fun extractCalibrationValueWithFindAnyOf(line: String): Int {
+    val firstDigit = line.findAnyOf(digits).requireDigit()
+    val secondDigit = line.findLastAnyOf(digits).requireDigit()
+    return firstDigit * 10 + secondDigit
+}
+
+private fun Pair<Int, String>?.requireDigit(): Int {
+    checkNotNull(this)
+    return second.digitToInt()
+}
+
+//////////////////////////////////
+
+private fun String.digitToInt(): Int = when (this) {
     "one" -> 1
     "two" -> 2
     "three" -> 3
