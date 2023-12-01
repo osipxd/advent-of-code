@@ -1,22 +1,22 @@
+private const val DAY = "Day1"
+
 fun main() {
-    val day = "1"
-    val input = readInput("Day$day")
+    val input = readInput(DAY)
+    val testInput1 = readInput("${DAY}_test1")
+    val testInput2 = readInput("${DAY}_test2")
 
     "Part 1" {
-        val testInput = readInput("Day${day}_test1")
-        part1(testInput) shouldBe 142
+        part1(testInput1) shouldBe 142
         measureAnswer { part1(input) }
     }
 
     "Part 2 (Regex)" {
-        val testInput = readInput("Day${day}_test2")
-        part2Regex(testInput) shouldBe 281
+        part2Regex(testInput2) shouldBe 281
         measureAnswer { part2Regex(input) }
     }
 
     "Part 2 (findAnyOf)" {
-        val testInput = readInput("Day${day}_test2")
-        part2FindAnyOf(testInput) shouldBe 281
+        part2FindAnyOf(testInput2) shouldBe 281
         measureAnswer { part2FindAnyOf(input) }
     }
 }

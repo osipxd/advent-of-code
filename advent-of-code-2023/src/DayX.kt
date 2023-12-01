@@ -1,7 +1,8 @@
+private const val DAY = "DayX"
+
 fun main() {
-    val day = "X"
-    val testInput = readInput("Day${day}_test")
-    val input = readInput("Day$day")
+    val testInput = readInput("${DAY}_test")
+    val input = readInput(DAY)
 
     "Part 1" {
         part1(testInput) shouldBe 0
