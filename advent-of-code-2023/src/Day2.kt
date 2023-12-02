@@ -15,48 +15,38 @@ fun main() {
     }
 }
 
-private fun part1(input: List<Game>): Int = input.filter(::fitsToBag).sumOf { it.id }
-
-private fun fitsToBag(game: Game): Boolean {
+private fun part1(input: List<Game>): Int {
     val bagColors = Colors(red = 12, green = 13, blue = 14)
-    return game.turns.all{ colors -> colors in bagColors }
+    return input
+        .filter { it.turns.all { colors -> colors in bagColors } }
+        .sumOf { it.id }
 }
 
-private fun part2(input: List<Game>): Int = input.map(::powerOfGame).sum()
-
-private fun powerOfGame(game: Game): Int {
-    var maxRed = 0
-    var maxGreen = 0
-    var maxBlue = 0
-
-    for (turn in game.turns) {
-        maxRed = maxOf(turn.red, maxRed)
-        maxGreen = maxOf(turn.green, maxGreen)
-        maxBlue = maxOf(turn.blue, maxBlue)
+private fun part2(input: List<Game>): Int {
+    return input.sumOf {
+        val minColors = Colors(red = 0, green = 0, blue = 0)
+        for (colors in it.turns) minColors.extend(colors)
+        minColors.power
     }
-    return maxRed * maxGreen * maxBlue
 }
 
-private fun readInput(name: String): List<Game> {
-    return readLines(name).map { line ->
-        val (rawId, rawTurns) = line.split(": ")
-        val turns = rawTurns.split("; ")
-            .map {
-                val colors = it.split(", ")
-                    .map { it.split(" ") }
-                    .associate { (count, color) -> color to count.toInt() }
-                Colors(
-                    red = colors.getOrDefault("red", 0),
-                    green = colors.getOrDefault("green", 0),
-                    blue = colors.getOrDefault("blue", 0)
-                )
-            }
+private fun readInput(name: String): List<Game> = readLines(name).map { line ->
+    val (rawId, rawTurns) = line.split(": ")
+    Game(
+        id = rawId.substringAfter(" ").toInt(),
+        turns = rawTurns.split("; ").map(::parseColors),
+    )
+}
 
-        Game(
-            id = rawId.substringAfter(" ").toInt(),
-            turns = turns,
-        )
-    }
+private fun parseColors(line: String): Colors {
+    val colors = line.split(", ")
+        .map { it.split(" ") }
+        .associate { (count, color) -> color to count.toInt() }
+    return Colors(
+        red = colors.getOrDefault("red", 0),
+        green = colors.getOrDefault("green", 0),
+        blue = colors.getOrDefault("blue", 0),
+    )
 }
 
 private data class Game(
@@ -64,9 +54,36 @@ private data class Game(
     val turns: List<Colors>
 )
 
-private data class Colors(val red: Int, val green: Int, val blue: Int) {
+@JvmInline
+private value class Colors(private val colors: Array<Int>) {
+
+    var red: Int
+        get() = colors[0]
+        set(value) {
+            colors[0] = value
+        }
+    var green: Int
+        get() = colors[1]
+        set(value) {
+            colors[1] = value
+        }
+    var blue: Int
+        get() = colors[2]
+        set(value) {
+            colors[2] = value
+        }
+
+    val power: Int get() = red * green * blue
+
+    constructor(red: Int, green: Int, blue: Int) : this(arrayOf(red, green, blue))
 
     operator fun contains(other: Colors): Boolean {
         return other.red <= red && other.green <= green && other.blue <= blue
+    }
+
+    fun extend(colorsToFit: Colors) {
+        red = maxOf(red, colorsToFit.red)
+        green = maxOf(green, colorsToFit.green)
+        blue = maxOf(blue, colorsToFit.blue)
     }
 }
