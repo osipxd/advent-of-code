@@ -1,108 +1,82 @@
+private typealias EngineSchematic = List<CharArray>
+
 private const val DAY = "Day3"
 
 fun main() {
-    var testInput = readInput("${DAY}_test")
-    var input = readInput(DAY)
+    fun testInput() = readInput("${DAY}_test")
+    fun input() = readInput(DAY)
 
     "Part 1" {
-        part1(testInput) shouldBe 4361
-        measureAnswer { part1(input) }
+        part1(testInput()) shouldBe 4361
+        measureAnswer { part1(input()) }
     }
 
-    testInput = readInput("${DAY}_test")
-    input = readInput(DAY)
     "Part 2" {
-        part2(testInput) shouldBe 467835
-        measureAnswer { part2(input) }
+        part2(testInput()) shouldBe 467835
+        measureAnswer { part2(input()) }
     }
 }
 
-private fun part1(input: List<CharArray>): Int {
+private fun part1(input: EngineSchematic): Int {
+    return input.sumIf(predicate = { !it.isDigit() && it != '.' }) { row, col ->
+        input.findNeighborNumbers(row, col).sum()
+    }
+}
+
+private fun part2(input: EngineSchematic): Int {
+    return input.sumIf(predicate = { it == '*' }) { row, col ->
+        val numbers = input.findNeighborNumbers(row, col)
+        if (numbers.size == 2) numbers[0] * numbers[1] else 0
+    }
+}
+
+private fun EngineSchematic.sumIf(
+    predicate: (char: Char) -> Boolean,
+    selector: (row: Int, col: Int) -> Int,
+): Int {
     var sum = 0
-    for (y in input.indices) {
-        for (x in input.first().indices) {
-            val char = input[y][x]
-            if (!char.isDigit() && char != '.') {
-                sum += input.findSumOfNeighbors(x, y)
-            }
+    for (row in indices) {
+        for (col in this[row].indices) {
+            if (predicate(this[row][col])) sum += selector(row, col)
         }
     }
 
     return sum
 }
 
-private fun part2(input: List<CharArray>): Int {
-    var sum = 0
-    for (y in input.indices) {
-        for (x in input.first().indices) {
-            if (input[y][x] == '*') {
-                val clone = input.map { it.clone() }
-                sum += clone.findGearRatio(x, y)
-            }
-        }
-    }
-
-    return sum
+private fun EngineSchematic.findNeighborNumbers(row: Int, col: Int): List<Int> {
+    return neighborsOf(row, col)
+        .filter { (r, c) -> r in indices && c in first().indices }
+        .map { (r, c) -> this[r].extractNumberAt(c) }
+        .filter { it != 0 }
+        .toList()
 }
 
-private fun List<CharArray>.findGearRatio(x: Int, y: Int): Int {
-    val numbers = ArrayDeque<Int>()
-    fun findNumber(x: Int, y: Int) {
-        val number = this.findNumber(x, y)
-        println(number)
-        if (number > 0) numbers.add(number)
+private fun neighborsOf(r: Int, c: Int): Sequence<Pair<Int, Int>> = sequenceOf(
+    r - 1 to c - 1, // top left
+    r - 1 to c,     // top
+    r - 1 to c + 1, // top right
+    r to c - 1,     // left
+    r to c + 1,     // right
+    r + 1 to c - 1, // bottom left
+    r + 1 to c,     // bottom
+    r + 1 to c + 1, // bottom right
+)
+
+private fun CharArray.extractNumberAt(index: Int): Int {
+    if (!this[index].isDigit()) return 0
+
+    var numberStart = 0
+    for (i in index downTo 0) {
+        if (this[i].isDigit()) numberStart = i else break
     }
-    findNumber(x + 1, y - 1)
-    findNumber(x, y - 1)
-    findNumber(x - 1, y - 1)
-    findNumber(x - 1, y)
-    findNumber(x + 1, y)
-    findNumber(x + 1, y + 1)
-    findNumber(x, y + 1)
-    findNumber(x - 1, y + 1)
-
-    println(numbers)
-    return if (numbers.size == 2) numbers[0] * numbers[1] else 0
-}
-
-private fun List<CharArray>.findSumOfNeighbors(x: Int, y: Int): Int {
-    val maxY = lastIndex
-    val maxX = first().lastIndex
-
-    var sum = 0
-    if (y > 0) {
-        if (x < maxY) sum += findNumber(x + 1, y - 1)
-        sum += findNumber(x, y - 1)
-        if (x > 0) sum += findNumber(x - 1, y - 1)
-    }
-    if (x > 0) sum += findNumber(x - 1, y)
-    if (x < maxX) sum += findNumber(x + 1, y)
-    if (y < maxY) {
-        if (x < maxY) sum += findNumber(x + 1, y + 1)
-        sum += findNumber(x, y + 1)
-        if (x > 0) sum += findNumber(x - 1, y + 1)
+    var numberEnd = 0
+    for (i in index..lastIndex) {
+        if (this[i].isDigit()) numberEnd = i else break
     }
 
-    return sum
-}
-
-private fun List<CharArray>.findNumber(x: Int, y: Int): Int {
-    if (x !in first().indices || y !in indices) return 0
-
-    val line = this[y]
-    if (!line[x].isDigit()) return 0
-
-    var firstDigitX = x
-    for (i in x downTo 0) {
-        if (line[i].isDigit()) firstDigitX = i else break
-    }
-    var lastDigitX = x
-    for (i in x..line.lastIndex) {
-        if (line[i].isDigit()) lastDigitX = i else break
-    }
-
-    val number = String(line.slice(firstDigitX..lastDigitX).toCharArray()).toInt()
-    for (i in firstDigitX..lastDigitX) line[i] = '.'
+    val number = String(sliceArray(numberStart..numberEnd)).toInt()
+    for (i in numberStart..numberEnd) this[i] = '.'
 
     return number
 }
