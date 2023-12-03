@@ -1,11 +1,10 @@
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 /**
  * Usage:
  * ```
  * "Part 1" {
- *    // Use PartScope DSL here
+ *    // Use TaskPartScope DSL here
  * }
  * ```
  */
@@ -25,7 +24,10 @@ class TaskPartScope {
         println("Answer: $value")
     }
 
-    @OptIn(ExperimentalTime::class)
+    /**
+     * It is not a benchmark, so it can be only used to compare algorithms taking
+     * long execution time (several seconds or longer).
+     */
     fun measureAnswer(calculate: () -> Any?) {
         val value: Any?
         val time = measureTime { value = calculate() }

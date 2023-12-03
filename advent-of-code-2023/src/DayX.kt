@@ -1,17 +1,17 @@
 private const val DAY = "DayX"
 
 fun main() {
-    val testInput = readInput("${DAY}_test")
-    val input = readInput(DAY)
+    fun testInput() = readInput("${DAY}_test")
+    fun input() = readInput(DAY)
 
     "Part 1" {
-        part1(testInput) shouldBe 0
-        measureAnswer { part1(input) }
+        part1(testInput()) shouldBe 0
+        measureAnswer { part1(input()) }
     }
 
     //"Part 2" {
-    //    part2(testInput) shouldBe 0
-    //    measureAnswer { part2(input) }
+    //    part2(testInput()) shouldBe 0
+    //    measureAnswer { part2(input()) }
     //}
 }
 
