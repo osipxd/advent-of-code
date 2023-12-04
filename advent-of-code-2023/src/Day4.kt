@@ -15,34 +15,28 @@ fun main() {
     }
 }
 
-private fun part1(input: List<Card>): Int = input.sumOf { card ->
-    val matches = card.numberOfMatches
-    if (matches > 0) 1 shl (matches - 1) else 0
-}
+private fun part1(input: List<Int>): Int =
+    input.sumOf { matches -> if (matches > 0) powerOfTwo(matches - 1) else 0 }
 
-private fun part2(input: List<Card>): Int {
-    val count = MutableList(input.size) { 1 }
-    for ((i, card) in input.withIndex()) {
-        val matches = card.numberOfMatches
-        for (j in (i + 1)..(i + matches)) {
-            count[j] += count[i]
+private fun powerOfTwo(power: Int) = 1 shl power
+
+private fun part2(input: List<Int>): Int {
+    val cardsCount = MutableList(input.size) { 1 }
+    for ((i, matches) in input.withIndex()) {
+        for (diff in 1..matches) {
+            cardsCount[i + diff] += cardsCount[i]
         }
     }
 
-    return count.sum()
+    return cardsCount.sum()
 }
+
+private val spacesRegex = Regex("\\s+")
 
 private fun readInput(name: String) = readLines(name).map { line ->
-    val (winningNumbers, myNumbers) = line.substringAfter(": ").split(" | ")
-    Card(
-        winningNumbers = winningNumbers.split(" ").filter { it.isNotEmpty() }.map { it.toInt() }.toSet(),
-        myNumbers = myNumbers.split(" ").filter { it.isNotEmpty() }.map { it.toInt() }.toSet(),
-    )
-}
+    val (winningNumbers, myNumbers) = line.substringAfter(":")
+        .split("|")
+        .map { numbers -> numbers.trim().split(spacesRegex).toSet() }
 
-private data class Card(
-    val winningNumbers: Set<Int>,
-    val myNumbers: Set<Int>,
-) {
-    val numberOfMatches = winningNumbers.intersect(myNumbers).size
+    (winningNumbers intersect myNumbers).size
 }
