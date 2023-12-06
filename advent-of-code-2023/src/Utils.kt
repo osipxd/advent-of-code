@@ -12,3 +12,6 @@ fun String.splitInts(delimiter: String = ","): List<Int> = split(delimiter).map(
 
 /** Takes two elements from [this] list and creates [Pair] of it. */
 fun <T> List<T>.takePair(): Pair<T, T> = get(0) to get(1)
+
+/** More convenient way to print test values. */
+fun <T> T.printValue(): T = also(::println)
