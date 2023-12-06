@@ -10,7 +10,8 @@ import kotlin.time.measureTime
  */
 inline operator fun String.invoke(body: TaskPartScope.() -> Unit) {
     println("=== $this ===")
-    TaskPartScope().apply(body)
+    runCatching { TaskPartScope().apply(body) }
+        .onFailure(Throwable::printStackTrace)
     println()
 }
 
