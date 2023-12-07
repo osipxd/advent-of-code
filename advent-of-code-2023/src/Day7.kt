@@ -29,7 +29,7 @@ private data class Hand(val cards: String, val bid: Int) {
 
     fun power(withJoker: Boolean): Int {
         val cardsCount = mutableMapOf<Char, Int>()
-        for (card in cards) cardsCount[card] = cardsCount.getOrDefault(card, 0) + 1
+        cards.groupingBy { it }.eachCountTo(cardsCount)
 
         val jokers = if (withJoker) cardsCount.remove('J') ?: 0 else 0
         val maxCardsCount = cardsCount.values.maxOrNull() ?: 0
