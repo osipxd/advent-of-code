@@ -4,9 +4,11 @@ fun main() {
     fun input() = readInput(DAY)
 
     "Part 1" {
-        fun testInput() = readInput("${DAY}_test")
+        fun testInput0() = readInput("${DAY}_test0")
+        fun testInput1() = readInput("${DAY}_test1")
 
-        part1(testInput()) shouldBe 2
+        part1(testInput0()) shouldBe 2
+        part1(testInput1()) shouldBe 6
         measureAnswer { part1(input()) }
     }
 
@@ -18,20 +20,13 @@ fun main() {
     }
 }
 
-private fun part1(input: DessertMap): Int = input.countSteps(fromNode = "AAA") { it == "ZZZ" }
+private fun part1(input: DessertMap): Int = input.countCycles(fromNode = "AAA") { it == "ZZZ" } * input.stepsInCycle
 
 private fun part2(input: DessertMap): Long {
-    val instructionsCount = input.instructions.length
-    // Assumption is that we can reach each end node in a whole number of instructions cycles.
-    // And number of cycles for each node is a prime number.
+    // Assumption is that number of cycles for each node is a prime number.
     return input.nodes.keys.filter { it.endsWith("A") }
-        .map { startNode ->
-            var stepsUntilEnd = input.countSteps(startNode) { it.endsWith("Z") }
-            // This IF is needed only for test input, where one of paths takes 1.5 cycles
-            if (stepsUntilEnd % instructionsCount != 0) stepsUntilEnd *= 2
-            (stepsUntilEnd / instructionsCount).toLong()
-        }
-        .reduce(Long::times) * instructionsCount
+        .map { startNode -> input.countCycles(startNode) { it.endsWith("Z") }.toLong() }
+        .reduce(Long::times) * input.stepsInCycle
 }
 
 private fun readInput(name: String): DessertMap {
@@ -51,17 +46,19 @@ private data class DessertMap(
     val nodes: Map<String, MapNode>
 ) {
 
-    fun countSteps(fromNode: String, predicate: (String) -> Boolean): Int {
+    val stepsInCycle = instructions.length
+
+    fun countCycles(fromNode: String, predicate: (String) -> Boolean): Int {
         var steps = 0
         var currentNode = fromNode
-        fun instruction() = instructions[(steps - 1) % instructions.length]
+        fun instruction() = instructions[(steps - 1) % stepsInCycle]
 
-        while (!predicate(currentNode)) {
+        while (steps % stepsInCycle != 0 || !predicate(currentNode)) {
             steps++
             currentNode = nodes.getValue(currentNode).nextNode(instruction())
         }
 
-        return steps
+        return steps / stepsInCycle
     }
 }
 
