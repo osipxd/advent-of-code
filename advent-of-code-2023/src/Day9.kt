@@ -20,11 +20,7 @@ private fun part1(input: List<List<Int>>): Int = input.sumOf { values ->
 }
 
 private fun part2(input: List<List<Int>>): Int = input.sumOf { values ->
-    var nextValue = 0
-    for (value in produceDiffs(values).toList().asReversed().map { it.first() }) {
-       nextValue = value - nextValue
-    }
-    nextValue
+    produceDiffs(values).map { it.first() }.toList().reduceRight(Int::minus)
 }
 
 private fun produceDiffs(values: List<Int>): Sequence<List<Int>> {
