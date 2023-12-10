@@ -1,6 +1,6 @@
 private typealias EngineSchematic = List<CharArray>
 
-private const val DAY = "Day3"
+private const val DAY = "Day03"
 
 fun main() {
     fun testInput() = readInput("${DAY}_test")

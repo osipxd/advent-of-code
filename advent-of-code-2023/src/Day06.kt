@@ -1,4 +1,4 @@
-private const val DAY = "Day6"
+private const val DAY = "Day06"
 
 fun main() {
     fun testInput() = readInput("${DAY}_test")

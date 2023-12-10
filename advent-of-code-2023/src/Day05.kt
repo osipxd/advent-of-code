@@ -1,7 +1,7 @@
 import kotlin.math.max
 import kotlin.math.min
 
-private const val DAY = "Day5"
+private const val DAY = "Day05"
 
 fun main() {
     fun testInput() = readInput("${DAY}_test")
