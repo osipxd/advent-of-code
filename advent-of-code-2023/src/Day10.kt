@@ -1,4 +1,4 @@
-private typealias Maze = List<List<Pipe>>
+private typealias Maze = List<MutableList<Pipe>>
 private typealias Position = Pair<Int, Int>
 
 private const val DAY = "Day10"
@@ -13,33 +13,82 @@ fun main() {
         measureAnswer { part1(input()) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
+    "Part 2" {
+        part2(testInput(2)) shouldBe 4
+        part2(testInput(3)) shouldBe 4
+        part2(testInput(4)) shouldBe 8
+        part2(testInput(5)) shouldBe 10
+        measureAnswer { part2(input()) }
+    }
 }
 
-private fun part1(maze: Maze): Int {
+private fun part1(maze: Maze): Int = findLoop(maze).size / 2
+
+/*
+║═╔╗╚
+
+║ - opposite
+╔ - if ╔╝ - opposite
+  - if ╗ - nothing
+╚ - if ╚╗ - opposite
+  - if ╝ - nothing
+ */
+
+private fun part2(maze: Maze): Int {
+    val loop = findLoop(maze)
+    var tilesInsideLoop = 0
+
+    // Ignore first and last row as it cannot contain tiles inside loop
+    for (row in 1..<maze.lastIndex) {
+        var insideLoop = false
+        var savedTile: Pipe? = null
+        for (col in maze[row].indices) {
+            if (row to col in loop) {
+                val tile = maze[row][col]
+                when {
+                    tile == Pipe.TOP_BOTTOM -> insideLoop = !insideLoop
+                    tile == Pipe.LEFT_RIGHT -> Unit // skip
+                    savedTile == null -> savedTile = tile
+                    else -> {
+                        if (tile == savedTile.opposite) insideLoop = !insideLoop
+                        savedTile = null
+                    }
+                }
+            } else if (insideLoop) {
+                tilesInsideLoop++
+            }
+        }
+    }
+
+    return tilesInsideLoop
+}
+
+private fun readInput(name: String) = readLines(name).map { it.map(Pipe::bySymbol).toMutableList() }
+
+/** Returns set of positions making loop. Replaces start tile with pipe. */
+private fun findLoop(maze: Maze): Set<Position> {
     val startPosition = findStartPosition(maze)
     var (comeFromSide, position) = sequenceOf(TOP, BOTTOM, LEFT, RIGHT)
         .map { side -> side to startPosition.nextBySide(side) }
+        .filter { (_, position) -> position in maze }
         .first { (comeFromSide, position) -> maze[position].canBeReachedFrom(comeFromSide) }
+    val startSide = comeFromSide
 
-    var steps = 1
-    while (position != startPosition) {
-        val pipe = maze[position]
-        val sideToGo = pipe.nextSide(comeFromSide)
-        position = position.nextBySide(sideToGo)
-        comeFromSide = sideToGo
-        steps++
+    return buildSet {
+        add(position)
+        while (position != startPosition) {
+            val pipe = maze[position]
+            val sideToGo = pipe.nextSide(comeFromSide)
+            position = position.nextBySide(sideToGo)
+            comeFromSide = sideToGo
+            add(position)
+        }
+    }.also {
+        val pipe = Pipe.bySides(startSide or sideOppositeTo(comeFromSide))
+        val (row, col) = startPosition
+        maze[row][col] = pipe
     }
-
-    return steps / 2
 }
-
-private fun part2(input: Maze): Int = TODO()
-
-private fun readInput(name: String) = readLines(name).map { it.map(Pipe::bySymbol) }
 
 private fun findStartPosition(maze: Maze): Position {
     for (row in maze.indices) {
@@ -53,14 +102,17 @@ private fun findStartPosition(maze: Maze): Position {
 }
 
 private enum class Pipe(val symbol: Char, val sides: Int) {
-    TOP_RIGHT(symbol = 'J', sides = TOP or LEFT),
+    TOP_LEFT(symbol = 'J', sides = TOP or LEFT),
     TOP_BOTTOM(symbol = '|', sides = TOP or BOTTOM),
-    TOP_LEFT(symbol = 'L', sides = TOP or RIGHT),
+    TOP_RIGHT(symbol = 'L', sides = TOP or RIGHT),
     LEFT_RIGHT(symbol = '-', sides = LEFT or RIGHT),
     LEFT_BOTTOM(symbol = '7', sides = LEFT or BOTTOM),
     RIGHT_BOTTOM(symbol = 'F', sides = RIGHT or BOTTOM),
     START(symbol = 'S', sides = 0),
-    NONE(symbol = '.', sides = 0);
+    EMPTY(symbol = '.', sides = 0);
+
+    val opposite: Pipe
+        get() = Pipe.bySides(sides xor 0b1111)
 
     fun nextSide(comeFromSide: Int): Int = sides xor sideOppositeTo(comeFromSide)
     fun canBeReachedFrom(side: Int): Boolean = sideOppositeTo(side) or sides == sides
@@ -87,6 +139,12 @@ private fun sideOppositeTo(side: Int): Int = when (side) {
     LEFT, RIGHT -> VERTICAL xor side
     NONE -> NONE
     else -> error("Unexpected side: $side")
+}
+
+
+private operator fun Maze.contains(position: Position): Boolean {
+    val (row, col) = position
+    return row in indices && col in get(row).indices
 }
 
 private operator fun Maze.get(position: Position): Pipe {
