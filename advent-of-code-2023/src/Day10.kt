@@ -1,5 +1,4 @@
 private typealias Maze = List<MutableList<Pipe>>
-private typealias Position = Pair<Int, Int>
 
 private const val DAY = "Day10"
 
