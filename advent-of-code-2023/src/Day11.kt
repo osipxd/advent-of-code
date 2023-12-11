@@ -13,13 +13,16 @@ fun main() {
         measureAnswer { part1(input()) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
+    "Part 2" {
+        solve(testInput(), distanceMultiplier = 100) shouldBe 8410
+        measureAnswer { part2(input()) }
+    }
 }
 
-private fun part1(space: SpaceImage): Int {
+private fun part1(space: SpaceImage) = solve(space, distanceMultiplier = 2)
+private fun part2(space: SpaceImage) = solve(space, distanceMultiplier = 1_000_000)
+
+private fun solve(space: SpaceImage, distanceMultiplier: Int): Long {
     val emptyRows = space.indices.filter { row -> space[row].all { it == '.' } }.toSet()
     val emptyColumns = space.first().indices.filter { col -> space.column(col).all { it == '.' } }.toSet()
 
@@ -34,14 +37,14 @@ private fun part1(space: SpaceImage): Int {
                     if (col in emptyColumns) {
                         colShift++
                     } else if (space[row][col] == '#') {
-                        add(row + rowShift to col + colShift)
+                        add(row + rowShift * (distanceMultiplier - 1) to col + colShift * (distanceMultiplier - 1))
                     }
                 }
             }
         }
     }
 
-    var sum = 0
+    var sum = 0L
     for (i in 0..<galaxies.lastIndex) {
         val (rowI, colI) = galaxies[i]
         for (j in i..galaxies.lastIndex) {
@@ -52,8 +55,6 @@ private fun part1(space: SpaceImage): Int {
 
     return sum
 }
-
-private fun part2(input: List<String>): Int = TODO()
 
 private fun readInput(name: String) = readLines(name)
 
