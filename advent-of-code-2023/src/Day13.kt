@@ -17,36 +17,35 @@ fun main() {
     }
 }
 
-private fun part1(input: List<String>): Int = input.sumOf { calculateMirrorNumber(it) }
-private fun part2(input: List<String>): Int = input.sumOf { calculateMirrorNumber(it, smudges = 1) }
+private fun part1(input: List<List<String>>): Int = input.sumOf { calculateMirrorPosition(it) }
+private fun part2(input: List<List<String>>): Int = input.sumOf { calculateMirrorPosition(it, smudges = 1) }
 
-private fun calculateMirrorNumber(pattern: String, smudges: Int = 0): Int {
-    val verticalMirror = findMirror(pattern.lines(), smudges)
-    val horizontalMirror = if (verticalMirror == 0) findMirror(pattern.columns(), smudges) else 0
+private fun calculateMirrorPosition(pattern: List<String>, smudges: Int = 0): Int {
+    val verticalPosition = findMirrorPosition(pattern, smudges)
+    val horizontalPosition = if (verticalPosition == 0) findMirrorPosition(pattern.columns(), smudges) else 0
 
-    return horizontalMirror + verticalMirror * 100
+    return horizontalPosition + verticalPosition * 100
 }
 
-private fun String.columns(): List<String> = buildList {
-    val lines = lines()
-    for (i in lines.first().indices) {
-        val column = buildString { for (line in lines) append(line[i]) }
+private fun List<String>.columns(): List<String> = buildList {
+    for (i in first().indices) {
+        val column = buildString { for (line in this@columns) append(line[i]) }
         add(column)
     }
 }
 
-private fun findMirror(lines: List<String>, smudges: Int): Int {
-    for (i in 0..<lines.lastIndex) {
-        var lineSmudges = 0
-        for (diff in 0..min(i, lines.size - i - 2)) {
-            lineSmudges += lines[i - diff] countDiff lines[i + 1 + diff]
-            if (lineSmudges > smudges) break
+private fun findMirrorPosition(pattern: List<String>, requiredSmudges: Int): Int {
+    for (i in 0..<pattern.lastIndex) {
+        var foundSmudges = 0
+        for (diff in 0..min(i, pattern.size - i - 2)) {
+            foundSmudges += pattern[i - diff] countDiffWith pattern[i + 1 + diff]
+            if (foundSmudges > requiredSmudges) break
         }
-        if (lineSmudges == smudges) return i + 1
+        if (foundSmudges == requiredSmudges) return i + 1
     }
     return 0
 }
 
-private infix fun String.countDiff(other: String): Int = indices.count { i -> this[i] != other[i] }
+private infix fun String.countDiffWith(other: String): Int = indices.count { i -> this[i] != other[i] }
 
-private fun readInput(name: String) = readText(name).split("\n\n")
+private fun readInput(name: String) = readText(name).split("\n\n").map { it.lines() }
