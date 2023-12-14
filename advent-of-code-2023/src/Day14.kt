@@ -1,4 +1,5 @@
 private typealias Platform = List<CharArray>
+private typealias PlatformSnapshot = List<String>
 
 private const val DAY = "Day14"
 
@@ -24,16 +25,17 @@ private fun part1(input: Platform): Int {
 
 private fun part2(input: Platform): Int {
     val memory = mutableListOf<List<String>>()
-    val cyclesCount = 1_000_000_000
-    for (cycle in 0..<cyclesCount) {
+    val rotationsCount = 1_000_000_000
+
+    repeat(rotationsCount) { i ->
         input.rotate()
 
-        val snapshot = input.map(::String)
-        val seenBeforeAt = memory.indexOf(snapshot)
-
-        if (seenBeforeAt != -1) {
-            val cycleSize = cycle - seenBeforeAt
-            return memory[seenBeforeAt - 1 + (cyclesCount - seenBeforeAt) % cycleSize].map { it.toCharArray() }
+        val snapshot = input.snapshot()
+        val cycleStart = memory.indexOf(snapshot)
+        if (cycleStart != -1) {
+            val cycleSize = i - cycleStart
+            val positionInCycle = (rotationsCount - cycleStart - 1) % cycleSize
+            return memory[cycleStart + positionInCycle]
                 .calculateNorthWeight()
         }
 
@@ -66,12 +68,17 @@ private fun Platform.tilt(direction: TiltDirection) {
     }
 }
 
-private fun Platform.calculateNorthWeight(): Int {
-    val maxWeight = size
+// Think about more lightweight snapshot here.
+private fun Platform.snapshot(): PlatformSnapshot = map(::String)
+
+private fun Platform.calculateNorthWeight(): Int = snapshot().calculateNorthWeight()
+
+@JvmName("calculateNorthWeightSnapshot")
+private fun PlatformSnapshot.calculateNorthWeight(): Int {
     var weight = 0
     for (col in indices) {
         for (row in indices) {
-            if (this[row][col] == 'O') weight += maxWeight - row
+            if (this[row][col] == 'O') weight += size - row
         }
     }
 
@@ -87,25 +94,21 @@ private enum class TiltDirection(val horizontal: Boolean, val forward: Boolean) 
     SOUTH(horizontal = false, forward = false),
     EAST(horizontal = true, forward = false);
 
-    val vertical: Boolean = !horizontal
-    val backward: Boolean = !forward
+    val vertical: Boolean get() = !horizontal
+    val backward: Boolean get() = !forward
 
     fun derivePosition(mainAxis: Int, movingAxis: Int, maximum: Int): Pair<Int, Int> {
-        val row = when {
-            vertical && forward -> movingAxis
-            vertical && backward -> maximum - movingAxis
-            else -> mainAxis
-        }
-        val col = when {
-            horizontal && forward -> movingAxis
-            horizontal && backward -> maximum - movingAxis
+        fun deriveAxis(orientation: Boolean) = when {
+            orientation && forward -> movingAxis
+            orientation && backward -> maximum - movingAxis
             else -> mainAxis
         }
 
-        return row to col
+        return deriveAxis(vertical) to deriveAxis(horizontal)
     }
 }
 
+// region Utils
 private operator fun Platform.get(position: Pair<Int, Int>): Char {
     val (row, col) = position
     return this[row][col]
@@ -115,3 +118,4 @@ private operator fun Platform.set(position: Pair<Int, Int>, value: Char) {
     val (row, col) = position
     this[row][col] = value
 }
+// endregion
