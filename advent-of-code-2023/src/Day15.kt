@@ -33,55 +33,44 @@ private fun part2(input: List<String>): Int {
     return hashMap.focusingPower()
 }
 
-private fun hash(value: String): Int {
-    var currentValue = 0
-    for (char in value) {
-        currentValue += char.code
-        currentValue *= 17
-        currentValue %= 256
-    }
-    return currentValue
+private fun hash(value: String): Int = value.fold(initial = 0) { currentValue, char ->
+    (currentValue + char.code) * 17 % 256
 }
 
 private fun readInput(name: String) = readText(name).split(",")
 
 private fun List<String>.parseOperations() = map { instruction ->
-    val operationIndex = instruction.indexOfAny(charArrayOf('=', '-'))
-    val label = instruction.substring(0..<operationIndex)
-    when (instruction[operationIndex]) {
-        '=' -> {
-            val focalLength = instruction.substringAfter('=').toInt()
-            Put(Lens(label, focalLength))
-        }
-
-        '-' -> Remove(label)
-        else -> error("Unexpected instruction: $instruction")
+    if ('=' in instruction) {
+        val (label, focalLength) = instruction.split("=")
+        Put(Lens(label, focalLength.toInt()))
+    } else {
+        Remove(label = instruction.dropLast(1))
     }
 }
 
 private class LensesHashMap {
-    private val buckets = Array<MutableList<Lens>>(256) { LinkedList() }
+    private val boxes = List<MutableList<Lens>>(256) { LinkedList() }
 
     fun put(lens: Lens) {
-        val bucket = bucketFor(lens.label)
-        val index = bucket.indexOfFirst { it.label == lens.label }
+        val box = findBox(lens.label)
+        val index = box.indexOfFirst { it.label == lens.label }
         if (index == -1) {
-            bucket += lens
+            box += lens
         } else {
-            bucket[index] = lens
+            box[index] = lens
         }
     }
 
     fun remove(label: String) {
-        bucketFor(label).removeIf { it.label == label }
+        findBox(label).removeIf { it.label == label }
     }
 
-    private fun bucketFor(label: String) = buckets[hash(label)]
+    private fun findBox(label: String) = boxes[hash(label)]
 
-    fun focusingPower(): Int = buckets.withIndex().sumOf { (i, bucket) -> bucket.focusingPower(i) }
+    fun focusingPower(): Int = boxes.withIndex().sumOf { (i, box) -> box.focusingPower(i) }
 
-    private fun List<Lens>.focusingPower(bucketNumber: Int): Int {
-        return withIndex().sumOf { (slotNumber, lens) -> (bucketNumber + 1) * (slotNumber + 1) * lens.focalLength }
+    private fun List<Lens>.focusingPower(boxNumber: Int): Int {
+        return withIndex().sumOf { (slotNumber, lens) -> (boxNumber + 1) * (slotNumber + 1) * lens.focalLength }
     }
 }
 
