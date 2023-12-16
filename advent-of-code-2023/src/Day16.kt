@@ -90,7 +90,7 @@ private data class Beam(
 private fun readInput(name: String) = readLines(name)
 
 private enum class BeamDirection(private val row: Int, private val col: Int) {
-    // No not change order of entries unless you want to break turning logic.
+    // Do not change order of entries unless you want to break turning logic.
     UP(row = -1, col = 0),
     RIGHT(row = 0, col = +1),
     DOWN(row = +1, col = 0),
