@@ -9,13 +9,28 @@ fun main() {
         measureAnswer { part1(input()) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
+    "Part 2" {
+        part2(testInput()) shouldBe 51
+        measureAnswer { part2(input()) }
+    }
 }
 
-private fun part1(field: List<String>): Int {
+private fun part1(field: List<String>): Int = energizeField(field, startBeam = Beam(DIRECTION_RIGHT, Position(0, 0)))
+private fun part2(field: List<String>): Int = field.startBeams().maxOf { startBeam -> energizeField(field, startBeam) }
+
+private fun List<String>.startBeams(): Sequence<Beam> = sequence {
+    for (row in indices) {
+        yield(Beam(DIRECTION_RIGHT, Position(row, 0)))
+        yield(Beam(DIRECTION_LEFT, Position(row, first().lastIndex)))
+    }
+
+    for (col in first().indices) {
+        yield(Beam(DIRECTION_DOWN, Position(0, col)))
+        yield(Beam(DIRECTION_DOWN, Position(lastIndex, col)))
+    }
+}
+
+private fun energizeField(field: List<String>, startBeam: Beam): Int {
     val beams = ArrayDeque<Beam>()
     val seenBeams = mutableSetOf<Beam>()
 
@@ -26,7 +41,7 @@ private fun part1(field: List<String>): Int {
         }
     }
 
-    addBeam(Beam(DIRECTION_RIGHT, Position(0, 0)))
+    addBeam(startBeam)
     while (beams.isNotEmpty()) {
         val beam = beams.removeFirst()
         val (nextBeam, forkedBeam) = beam.move(field[beam.position])
@@ -36,8 +51,6 @@ private fun part1(field: List<String>): Int {
 
     return seenBeams.distinctBy { it.position }.size
 }
-
-private fun part2(input: List<String>): Int = TODO()
 
 private data class Beam(
     val direction: Int,
