@@ -1,3 +1,5 @@
+import BeamDirection.*
+
 private const val DAY = "Day16"
 
 fun main() {
@@ -15,18 +17,18 @@ fun main() {
     }
 }
 
-private fun part1(field: List<String>): Int = energizeField(field, startBeam = Beam(DIRECTION_RIGHT, Position(0, 0)))
+private fun part1(field: List<String>): Int = energizeField(field, startBeam = Beam(RIGHT, Position(0, 0)))
 private fun part2(field: List<String>): Int = field.startBeams().maxOf { startBeam -> energizeField(field, startBeam) }
 
 private fun List<String>.startBeams(): Sequence<Beam> = sequence {
     for (row in indices) {
-        yield(Beam(DIRECTION_RIGHT, Position(row, 0)))
-        yield(Beam(DIRECTION_LEFT, Position(row, first().lastIndex)))
+        yield(Beam(RIGHT, Position(row, 0)))
+        yield(Beam(LEFT, Position(row, first().lastIndex)))
     }
 
     for (col in first().indices) {
-        yield(Beam(DIRECTION_DOWN, Position(0, col)))
-        yield(Beam(DIRECTION_DOWN, Position(lastIndex, col)))
+        yield(Beam(DOWN, Position(0, col)))
+        yield(Beam(UP, Position(lastIndex, col)))
     }
 }
 
@@ -53,37 +55,31 @@ private fun energizeField(field: List<String>, startBeam: Beam): Int {
 }
 
 private data class Beam(
-    val direction: Int,
+    val direction: BeamDirection,
     val position: Position,
 ) {
 
+    /** Returns the beam with updated position and direction, and forked beam if it was split. */
     fun move(currentTile: Char): Pair<Beam, Beam?> {
         val (direction, forkedBeam) = processTile(currentTile)
-        var (row, col) = position
-        when (direction) {
-            DIRECTION_UP -> row--
-            DIRECTION_RIGHT -> col++
-            DIRECTION_DOWN -> row++
-            DIRECTION_LEFT -> col--
-        }
-
-        return Beam(direction, row to col) to forkedBeam
+        val position = direction.nextPosition(position)
+        return Beam(direction, position) to forkedBeam
     }
 
-    private fun processTile(tile: Char): Pair<Int, Beam?> {
+    private fun processTile(tile: Char): Pair<BeamDirection, Beam?> {
         var forkedBeam: Beam? = null
         var direction = this.direction
         when (tile) {
-            in "\\/" -> direction = turn(direction, tile)
+            in "\\/" -> direction = direction.turn(tile)
 
             '|' -> if (direction.horizontal) {
-                direction = DIRECTION_UP
-                forkedBeam = copy(direction = DIRECTION_DOWN)
+                direction = UP
+                forkedBeam = copy(direction = DOWN)
             }
 
             '-' -> if (direction.vertical) {
-                direction = DIRECTION_LEFT
-                forkedBeam = copy(direction = DIRECTION_RIGHT)
+                direction = LEFT
+                forkedBeam = copy(direction = RIGHT)
             }
         }
 
@@ -91,26 +87,31 @@ private data class Beam(
     }
 }
 
-private fun turn(direction: Int, mirror: Char): Int {
-    val turnClockwise = when (direction) {
-        DIRECTION_UP, DIRECTION_DOWN -> mirror == '/'
-        DIRECTION_RIGHT, DIRECTION_LEFT -> mirror == '\\'
-        else -> error("Unexpected direction: $direction")
-    }
-
-    return (if (turnClockwise) direction + 1 else direction - 1).mod(4)
-}
-
 private fun readInput(name: String) = readLines(name)
 
-private const val DIRECTION_UP = 0
-private const val DIRECTION_RIGHT = 1
-private const val DIRECTION_DOWN = 2
-private const val DIRECTION_LEFT = 3
+private enum class BeamDirection(private val row: Int, private val col: Int) {
+    // No not change order of entries unless you want to break turning logic.
+    UP(row = -1, col = 0),
+    RIGHT(row = 0, col = +1),
+    DOWN(row = +1, col = 0),
+    LEFT(row = 0, col = -1);
 
-private val Int.vertical get() = this % 2 == 0
-private val Int.horizontal get() = this % 2 == 1
+    val vertical get() = col == 0
+    val horizontal get() = row == 0
 
+    fun nextPosition(position: Position): Position = position.first + row to position.second + col
+
+    fun turn(mirror: Char): BeamDirection {
+        return turn(clockwise = if (vertical) mirror == '/' else mirror == '\\')
+    }
+
+    fun turn(clockwise: Boolean): BeamDirection {
+        val newDirectionOrdinal = (if (clockwise) ordinal + 1 else ordinal - 1).mod(entries.size)
+        return entries[newDirectionOrdinal]
+    }
+}
+
+// region Utils
 private operator fun List<String>.get(position: Position): Char {
     val (row, col) = position
     return this[row][col]
@@ -120,3 +121,4 @@ private operator fun List<String>.contains(position: Position): Boolean {
     val (row, col) = position
     return row in indices && col in first().indices
 }
+// endregion
