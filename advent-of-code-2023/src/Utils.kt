@@ -1,8 +1,14 @@
+import lib.matrix.Matrix
+import lib.matrix.toMatrix
 import kotlin.io.path.Path
 import kotlin.io.path.readLines
 import kotlin.io.path.readText
 
 typealias Position = Pair<Int, Int>
+
+fun readMatrix(fileName: String): Matrix<Char> = readMatrix(fileName) { line -> line.map { it } }
+fun <T> readMatrix(fileName: String, lineElements: (String) -> List<T>): Matrix<T> =
+    readLines(fileName).map(lineElements).toMatrix()
 
 fun readText(name: String) = path(name).readText()
 fun readLines(name: String) = path(name).readLines()
