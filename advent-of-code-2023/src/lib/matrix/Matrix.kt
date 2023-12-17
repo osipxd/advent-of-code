@@ -17,7 +17,20 @@ class Matrix<T>(lines: List<List<T>>) {
     private val values: MutableList<T> = MutableList(rowCount * columnCount) { i ->
         lines[i / columnCount][i % columnCount]
     }
+
+    fun rows(): List<List<T>> = values.chunked(columnCount)
+
+    fun row(row: Int): List<T> = values.slice(index(row, 0)..index(row, lastColumnIndex))
+
+    fun column(column: Int): List<T> = buildList {
+        for (row in rowIndices) add(this@Matrix[row, column])
+    }
+
     operator fun get(row: Int, column: Int): T = values[index(row, column)]
+
+    operator fun set(row: Int, column: Int, value: T) {
+        values[index(row, column)] = value
+    }
 
     private fun index(row: Int, column: Int): Int = row * columnCount + column
 }

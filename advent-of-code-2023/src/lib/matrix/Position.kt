@@ -15,3 +15,7 @@ operator fun Matrix<*>.contains(position: Position): Boolean {
 }
 
 operator fun <T> Matrix<T>.get(position: Position): T = this[position.row, position.column]
+
+operator fun <T> Matrix<T>.set(position: Position, value: T) {
+    this[position.row, position.column] = value
+}

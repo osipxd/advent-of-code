@@ -1,6 +1,8 @@
+import lib.matrix.Matrix
+import lib.matrix.Position
 import kotlin.math.abs
 
-private typealias SpaceImage = List<String>
+private typealias SpaceImage = Matrix<Char>
 
 private const val DAY = "Day11"
 
@@ -30,18 +32,22 @@ private fun solve(space: SpaceImage, shiftMultiplier: Int): Long {
 
 // Can I make this method more clear?
 private fun findGalaxies(space: SpaceImage, calculateShift: (Int) -> Int): List<Position> = buildList {
-    val emptyRows = space.indices.filterAllEmpty(space::row)
-    val emptyColumns = space.first().indices.filterAllEmpty(space::column)
+    val emptyRows = space.rowIndices.filterAllEmpty(space::row)
+    val emptyColumns = space.columnIndices.filterAllEmpty(space::column)
 
     var emptyRowsCount = 0
-    for (row in space.indices) {
+    for (row in space.rowIndices) {
         if (row in emptyRows) {
             emptyRowsCount++
         } else {
             var emptyColumnsCount = 0
-            for (col in space[row].indices) {
-                if (space[row][col] == '#') {
-                    add(row + calculateShift(emptyRowsCount) to col + calculateShift(emptyColumnsCount))
+            for (col in space.columnIndices) {
+                if (space[row, col] == '#') {
+                    val position = Position(
+                        row + calculateShift(emptyRowsCount),
+                        col + calculateShift(emptyColumnsCount),
+                    )
+                    add(position)
                 } else if (col in emptyColumns) {
                     emptyColumnsCount++
                 }
@@ -50,28 +56,22 @@ private fun findGalaxies(space: SpaceImage, calculateShift: (Int) -> Int): List<
     }
 }
 
-private fun IntRange.filterAllEmpty(chars: (Int) -> Sequence<Char>): Set<Int> {
+private fun IntRange.filterAllEmpty(chars: (Int) -> List<Char>): Set<Int> {
     return filterTo(mutableSetOf()) { i -> chars(i).all { it == '.' } }
 }
 
-private fun readInput(name: String) = readLines(name)
+private fun readInput(name: String) = readMatrix(name)
 
 // region Utils
-private fun SpaceImage.row(row: Int): Sequence<Char> = this[row].asSequence()
-
-private fun SpaceImage.column(col: Int): Sequence<Char> = sequence {
-    for (row in indices) yield(this@column[row][col])
-}
-
 private fun <T> List<T>.combinations(): Sequence<Pair<T, T>> = sequence {
     for (i in 0..<lastIndex) {
-        for (j in i..lastIndex) {
+        for (j in (i + 1)..lastIndex) {
             yield(get(i) to get(j))
         }
     }
 }
 
 private infix fun Position.distanceTo(other: Position): Int {
-    return abs(this.first - other.first) + abs(this.second - other.second)
+    return abs(this.row - other.row) + abs(this.column - other.column)
 }
 // endregion

@@ -1,4 +1,7 @@
-private typealias Platform = List<CharArray>
+import lib.matrix.*
+import lib.matrix.Position
+
+private typealias Platform = Matrix<Char>
 private typealias PlatformSnapshot = List<String>
 
 private const val DAY = "Day14"
@@ -42,7 +45,7 @@ private fun part2(input: Platform): Int {
         memory += snapshot
     }
 
-    error("There is no cycle?")
+    error("Where is the cycle?")
 }
 
 private fun Platform.rotate() {
@@ -69,7 +72,7 @@ private fun Platform.tilt(direction: TiltDirection) {
 }
 
 // Think about more lightweight snapshot here.
-private fun Platform.snapshot(): PlatformSnapshot = map(::String)
+private fun Platform.snapshot(): PlatformSnapshot = rows().map { it.joinToString("") }
 
 private fun Platform.calculateNorthWeight(): Int = snapshot().calculateNorthWeight()
 
@@ -85,8 +88,8 @@ private fun PlatformSnapshot.calculateNorthWeight(): Int {
     return weight
 }
 
-private fun readInput(name: String) = readLines(name).map { it.toCharArray() }
-    .also { input -> check(input.size == input.first().size) }
+private fun readInput(name: String) = readMatrix(name)
+    .also { input -> check(input.rowCount == input.columnCount) }
 
 private enum class TiltDirection(val horizontal: Boolean, val forward: Boolean) {
     NORTH(horizontal = false, forward = true),
@@ -97,25 +100,17 @@ private enum class TiltDirection(val horizontal: Boolean, val forward: Boolean) 
     val vertical: Boolean get() = !horizontal
     val backward: Boolean get() = !forward
 
-    fun derivePosition(mainAxis: Int, movingAxis: Int, maximum: Int): Pair<Int, Int> {
+    fun derivePosition(mainAxis: Int, movingAxis: Int, maximum: Int): Position {
         fun deriveAxis(orientation: Boolean) = when {
             orientation && forward -> movingAxis
             orientation && backward -> maximum - movingAxis
             else -> mainAxis
         }
 
-        return deriveAxis(vertical) to deriveAxis(horizontal)
+        return Position(deriveAxis(vertical), deriveAxis(horizontal))
     }
 }
 
-// region Utils
-private operator fun Platform.get(position: Pair<Int, Int>): Char {
-    val (row, col) = position
-    return this[row][col]
-}
-
-private operator fun Platform.set(position: Pair<Int, Int>, value: Char) {
-    val (row, col) = position
-    this[row][col] = value
-}
-// endregion
+// Matrix is always square so slightly simplify API
+private val Platform.indices get() = rowIndices
+private val Platform.lastIndex get() = lastRowIndex
