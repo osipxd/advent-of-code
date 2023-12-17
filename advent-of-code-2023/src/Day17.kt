@@ -1,5 +1,8 @@
-import BeamDirection.DOWN
-import BeamDirection.RIGHT
+import lib.matrix.*
+import lib.matrix.Direction.Companion.nextInDirection
+import lib.matrix.Direction.DOWN
+import lib.matrix.Direction.RIGHT
+import lib.matrix.Position
 import kotlin.math.min
 
 private const val DAY = "Day17"
@@ -21,74 +24,65 @@ fun main() {
 }
 
 
-private fun part1(input: List<List<Int>>): Int = solve(input, steps = 1..3)
-private fun part2(input: List<List<Int>>): Int = solve(input, steps = 4..10)
+private fun part1(input: Matrix<Int>): Int = solve(input, steps = 1..3)
+private fun part2(input: Matrix<Int>): Int = solve(input, steps = 4..10)
 
-private fun solve(input: List<List<Int>>, steps: IntRange): Int {
-    val slots = ArrayDeque<State>()
-    val bestSeen = mutableMapOf<Pair<Position, Boolean>, Int>()
-
-    val lookForPosition = input.lastIndex to input.first().lastIndex
-    var resultLoss = Int.MAX_VALUE
-
-    fun State.key() = position to lastDirection.horizontal
+private fun solve(map: Matrix<Int>, steps: IntRange): Int {
+    val states = ArrayDeque<State>()
+    val bestSeenLoss = mutableMapOf<State.Key, Int>()
 
     fun addState(state: State) {
         val key = state.key()
-        if (state.position == lookForPosition) {
-            resultLoss = min(resultLoss, state.loss)
-        } else if (key !in bestSeen || bestSeen.getValue(key) > state.loss) {
-            bestSeen[key] = state.loss
-            slots.addLast(state)
+        if (key !in bestSeenLoss || bestSeenLoss.getValue(key) > state.loss) {
+            bestSeenLoss[key] = state.loss
+            states.addLast(state)
         }
     }
 
-    tailrec fun State.goInDirection(newDirection: BeamDirection = lastDirection, steps: IntRange) {
-        val newPosition = newDirection.nextPosition(position)
-        if (newPosition in input) {
-            val newState = copy(
-                position = newPosition,
-                loss = loss + input[newPosition],
-                lastDirection = newDirection,
-            )
-            val nextSteps = if (steps.first == 1) {
-                addState(newState)
-                1..<steps.last
-            } else {
-                (steps.first - 1)..<steps.last
-            }
-            if (!nextSteps.isEmpty()) newState.goInDirection(steps = nextSteps)
-        }
+    tailrec fun State.goInDirection(newDirection: Direction = lastDirection, steps: IntRange) {
+        val newPosition = position.nextInDirection(newDirection)
+        if (newPosition !in map) return
+
+        val newState = copy(
+            position = newPosition,
+            loss = loss + map[newPosition],
+            lastDirection = newDirection,
+        )
+
+        if (steps.first == 1) addState(newState)
+        val nextSteps = (steps.first - 1).coerceAtLeast(1)..<steps.last
+        if (!nextSteps.isEmpty()) newState.goInDirection(steps = nextSteps)
     }
 
-    val initialState = State(position = 0 to 0, loss = 0, lastDirection = RIGHT)
+    // Prefill queue with initial moves
+    val initialState = State(position = map.topLeftPosition, loss = 0, lastDirection = RIGHT)
     initialState.goInDirection(RIGHT, steps)
     initialState.goInDirection(DOWN, steps)
 
-    while (slots.isNotEmpty()) {
-        val state = slots.removeFirst()
-        if (bestSeen.getValue(state.key()) < state.loss) continue
+    while (states.isNotEmpty()) {
+        val state = states.removeFirst()
+        if (bestSeenLoss.getValue(state.key()) < state.loss) continue
         state.goInDirection(state.lastDirection.turn(clockwise = true), steps)
         state.goInDirection(state.lastDirection.turn(clockwise = false), steps)
     }
 
-    return resultLoss
+    fun finalValue(horizontalDirection: Boolean): Int {
+        val key = State.Key(map.bottomRightPosition, horizontalDirection)
+        return bestSeenLoss[key] ?: Int.MAX_VALUE
+    }
+
+    return min(finalValue(horizontalDirection = true), finalValue(horizontalDirection = false))
 }
 
 private data class State(
     val position: Position,
-    val lastDirection: BeamDirection,
+    val lastDirection: Direction,
     val loss: Int,
-)
+) {
 
-private fun readInput(name: String) = readLines(name).map { it.map { it.digitToInt() } }
+    fun key() = Key(position, lastDirection.horizontal)
 
-private operator fun List<List<Int>>.get(position: Position): Int {
-    val (row, col) = position
-    return this[row][col]
+    data class Key(val position: Position, val horizontalDirection: Boolean)
 }
 
-private operator fun List<List<Int>>.contains(position: Position): Boolean {
-    val (row, col) = position
-    return row in indices && col in first().indices
-}
+private fun readInput(name: String) = readMatrix(name) { line -> line.map(Char::digitToInt) }
