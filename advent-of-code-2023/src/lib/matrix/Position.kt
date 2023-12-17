@@ -3,7 +3,7 @@ package lib.matrix
 /** Data class representing position in Matrix. */
 data class Position(val row: Int, val column: Int) {
 
-    fun offsetBy(row: Int, column: Int): Position = Position(this.row + row, this.column + column)
+    fun offsetBy(row: Int = 0, column: Int = 0): Position = Position(this.row + row, this.column + column)
 
     companion object {
         val Zero: Position = Position(0, 0)

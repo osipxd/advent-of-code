@@ -1,4 +1,7 @@
-private typealias Maze = List<MazeRow>
+import lib.matrix.*
+import lib.matrix.Position
+
+private typealias Maze = Matrix<Pipe>
 private typealias MazeRow = List<Pipe>
 
 private const val DAY = "Day10"
@@ -28,10 +31,10 @@ private fun part2(maze: Maze): Int {
     val loop = findLoop(maze)
 
     // Ignore first and last row as it cannot contain tiles lying inside loop
-    return (1..<maze.lastIndex).sumOf { row ->
+    return (1..<maze.lastRowIndex).sumOf { row ->
         countInnerTilesInRow(
-            row = maze[row],
-            isPartOfLoop = { col -> row to col in loop }
+            row = maze.row(row),
+            isPartOfLoop = { col -> Position(row, col) in loop },
         )
     }
 }
@@ -61,7 +64,7 @@ private fun countInnerTilesInRow(row: MazeRow, isPartOfLoop: (col: Int) -> Boole
     return tilesInsideLoop
 }
 
-private fun readInput(name: String) = readLines(name).map { it.map(Pipe::bySymbol).toMutableList() }
+private fun readInput(name: String) = readMatrix(name) { it.map(Pipe::bySymbol) }
 
 /** Returns set of positions making loop. Replaces start tile with pipe. */
 private fun findLoop(maze: Maze): Set<Position> {
@@ -88,10 +91,10 @@ private fun findLoop(maze: Maze): Set<Position> {
 }
 
 private fun findStartPosition(maze: Maze): Position {
-    for (row in maze.indices) {
-        for (col in maze[row].indices) {
-            if (maze[row][col] == Pipe.START) {
-                return row to col
+    for (row in maze.rowIndices) {
+        for (col in maze.columnIndices) {
+            if (maze[row, col] == Pipe.START) {
+                return Position(row, col)
             }
         }
     }
@@ -121,12 +124,11 @@ private enum class Pipe(val symbol: Char, val sides: Int) {
 }
 
 private fun Position.nextBySide(side: Int): Position {
-    val (row, col) = this
     return when (side) {
-        SIDE_TOP -> row - 1 to col
-        SIDE_BOTTOM -> row + 1 to col
-        SIDE_LEFT -> row to col - 1
-        SIDE_RIGHT -> row to col + 1
+        SIDE_TOP -> offsetBy(row = -1)
+        SIDE_BOTTOM -> offsetBy(row = +1)
+        SIDE_LEFT -> offsetBy(column = -1)
+        SIDE_RIGHT -> offsetBy(column = +1)
         else -> error("Unexpected side: $side")
     }
 }
@@ -146,21 +148,3 @@ private const val SIDE_TOP = 0b1000
 private const val SIDE_BOTTOM = 0b0100
 private const val SIDE_LEFT = 0b0010
 private const val SIDE_RIGHT = 0b0001
-
-// region Maze utils
-private operator fun Maze.contains(position: Position): Boolean {
-    val (row, col) = position
-    return row in indices && col in get(row).indices
-}
-
-private operator fun Maze.get(position: Position): Pipe {
-    val (row, col) = position
-    return this[row][col]
-}
-
-private operator fun Maze.set(position: Position, pipe: Pipe) {
-    val (row, col) = position
-    // I'm sorry for this hack, but I don't want to make the whole Maze mutable.
-    (this[row] as MutableList<Pipe>)[col] = pipe
-}
-// endregion
