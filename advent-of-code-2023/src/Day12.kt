@@ -1,3 +1,5 @@
+import lib.repeat
+
 private const val DAY = "Day12"
 
 private typealias Record = Pair<String, List<Int>>
@@ -65,5 +67,3 @@ private fun readInput(name: String) = readLines(name).map { line ->
     val (pattern, rawNumbers) = line.split(" ")
     pattern to rawNumbers.splitInts()
 }
-
-private fun <T> List<T>.repeat(times: Int): List<T> = List(size * times) { get(it % size) }

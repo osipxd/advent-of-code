@@ -5,3 +5,5 @@ fun <T, K> Iterable<T>.countDistinctBy(selector: (T) -> K): Int {
     for (value in this) set.add(selector(value))
     return set.size
 }
+
+fun <T> List<T>.repeat(times: Int): List<T> = List(size * times) { get(it % size) }
