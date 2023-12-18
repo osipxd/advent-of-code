@@ -18,5 +18,7 @@ enum class Direction(private val row: Int, private val col: Int) {
 
     companion object {
         fun Position.nextInDirection(direction: Direction) = offsetBy(direction.row, direction.col)
+        fun Position.moveInDirection(direction: Direction, distance: Int) =
+            offsetBy(direction.row * distance, direction.col * distance)
     }
 }
