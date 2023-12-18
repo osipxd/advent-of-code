@@ -3,6 +3,7 @@ import lib.matrix.Direction.*
 import lib.matrix.Direction.Companion.moveInDirection
 import lib.matrix.Direction.Companion.nextInDirection
 import lib.matrix.Position
+import kotlin.math.abs
 
 private const val DAY = "Day18"
 
@@ -46,9 +47,31 @@ private fun part1(input: List<Command>): Int {
     return seenPositions.size
 }
 
-fun Position.neighbors(): List<Position> = Direction.entries.map { nextInDirection(it) }
+private fun part2(input: List<Command>): Long {
+    val commands = input.map { (_, _, color) ->
+        val direction = when (color.last()) {
+            '0' -> RIGHT
+            '1' -> DOWN
+            '2' -> LEFT
+            else -> UP
+        }
+        val distance = color.drop(1).dropLast(1).toInt(radix = 16)
+        Command(direction, distance, "")
+    }
 
-private fun part2(input: List<Command>): Int = TODO()
+    var position = Position.Zero
+    val points = mutableListOf(position)
+    for (command in commands) {
+        position = position.moveInDirection(command.direction, command.distance)
+        points += position
+    }
+
+    val area = points.windowed(2) { (p1, p2) -> p1.row.toLong() * p2.column - p2.row.toLong() * p1.column }.sum() / 2
+    val p = commands.sumOf { it.distance }
+    return abs(area) + p / 2 + 1
+}
+
+fun Position.neighbors(): List<Position> = Direction.entries.map { nextInDirection(it) }
 
 private fun readInput(name: String) = readLines(name).map { line ->
     val (dir, dist, color) = line.split(" ")
