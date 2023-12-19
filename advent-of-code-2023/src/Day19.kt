@@ -1,6 +1,3 @@
-import kotlin.math.max
-import kotlin.math.min
-
 private const val DAY = "Day19"
 
 fun main() {
@@ -29,21 +26,7 @@ private fun part1(input: Pair<Map<String, Workflow>, List<Part>>): Int {
 private fun part2(input: Pair<Map<String, Workflow>, List<Part>>): Long {
     val workflows = input.first
     val possibleRanges = mutableListOf<PartRange>()
-    val impossiblePartRanges = mutableListOf<PartRange>()
-    val rangesOverlaps = mutableListOf<PartRange>()
     val queue = ArrayDeque<Pair<String, PartRange>>()
-
-    fun addPossibleRange(range: PartRange) {
-        val nonOverlapping = possibleRanges.fold(range) { newRange, possibleRange -> newRange - possibleRange }
-        if (range != nonOverlapping) {
-            println("$range -> $nonOverlapping")
-        } else {
-            range.printValue()
-        }
-        if (!nonOverlapping.isEmpty()) {
-            possibleRanges += nonOverlapping
-        }
-    }
 
     queue.addFirst("in" to PartRange())
     while (queue.isNotEmpty()) {
@@ -55,8 +38,8 @@ private fun part2(input: Pair<Map<String, Workflow>, List<Part>>): Long {
             val (passedRange, restOfRange) = range.splitBy(rule)
             if (passedRange != null) {
                 when (rule.result) {
-                    "A" -> addPossibleRange(passedRange)
-                    "R" -> impossiblePartRanges += passedRange
+                    "A" -> possibleRanges += passedRange
+                    "R" -> Unit
                     else -> queue.addLast(rule.result to passedRange)
                 }
             }
@@ -64,12 +47,7 @@ private fun part2(input: Pair<Map<String, Workflow>, List<Part>>): Long {
         }
     }
 
-    val possible = possibleRanges.sumOf { it.count() }.printValue()
-//    impossiblePartRanges.forEach { it.printValue() }
-//    val impossible = impossiblePartRanges.sumOf { it.count() }.printValue()
-//    (possible + impossible).printValue()
-    PartRange().count().printValue()
-    return possible
+    return possibleRanges.sumOf(PartRange::count)
 }
 
 private fun readInput(name: String): Pair<Map<String, Workflow>, List<Part>> {
@@ -160,7 +138,6 @@ private data class PartRange(
         's' to 1..4000,
     )
 ) {
-    fun isEmpty() = params.values.any { it.isEmpty() }
 
     fun count() = params.values.map { it.last - it.first + 1L }.reduce(Long::times)
 
@@ -182,27 +159,11 @@ private data class PartRange(
         if (range.isEmpty()) return null
         return PartRange(params = params + (parameter to range))
     }
-
-    operator fun minus(other: PartRange): PartRange {
-        val nonOverlapping = params.mapValues { (parameter, range) -> range exclude other.params.getValue(parameter) }
-        return if (nonOverlapping.isEmpty()) this else PartRange(nonOverlapping)
-    }
 }
 
 private fun IntRange.splitBy(secondRangeStart: Int): Pair<IntRange, IntRange> {
     return (first..<secondRangeStart) to (secondRangeStart..last)
 }
-
-private infix fun IntRange.intersect(other: IntRange): IntRange {
-    return max(this.first, other.first)..min(this.last, other.last)
-}
-
-private infix fun IntRange.exclude(other: IntRange): IntRange {
-    if (other !in this) return this
-    return min(this.first, other.last + 1)..max(this.last, other.first - 1)
-}
-
-private operator fun IntRange.contains(other: IntRange): Boolean = other.first in this || other.last in this
 
 private fun <A, B> Pair<A, B>.reversed(): Pair<B, A> = second to first
 private fun <T, R> Pair<T, T>.map(transform: (T) -> R): Pair<R, R> = transform(first) to transform(second)
