@@ -33,4 +33,4 @@ private fun produceDiffs(values: List<Int>): Sequence<List<Int>> {
     }
 }
 
-private fun readInput(name: String) = readLines(name).map { it.splitInts(" ") }
+private fun readInput(name: String) = readLines(name) { it.splitInts() }
