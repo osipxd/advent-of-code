@@ -12,6 +12,7 @@ fun <T> readMatrix(fileName: String, lineElements: (String) -> List<T>): Matrix<
 
 fun readText(name: String) = path(name).readText()
 fun readLines(name: String) = path(name).readLines()
+fun <T> readLines(name: String, transform: (String) -> T) = path(name).readLines().map(transform)
 
 private fun path(name: String) = Path("src", "$name.txt")
 
