@@ -23,31 +23,43 @@ private fun part1(input: Modules): Int {
     var lowCount = 0
     var highCount = 0
     repeat(times = 1000) {
-        val (low, high) = input.pushButton()
-        lowCount += low
-        highCount += high
-    }
-
-    return lowCount * highCount
-}
-
-private fun part2(input: Modules): Int {
-    TODO()
-}
-
-private fun Modules.pushButton(): Pair<Int, Int> {
-    val queue = ArrayDeque<Impulse>()
-    var lowCount = 0
-    var highCount = 0
-
-    fun addImpulses(impulses: List<Impulse>) {
-        for (impulse in impulses) {
-            queue.addLast(impulse)
+        input.pushButton { impulse ->
             if (impulse.value == SIGNAL_LOW) {
                 lowCount++
             } else {
                 highCount++
             }
+        }
+    }
+
+    return lowCount * highCount
+}
+
+private fun part2(input: Modules): Long {
+    val sourcesToFind = (input.values.first { it.destinations == listOf("rx") } as Conjunction).inputs.toMutableSet()
+    var result = 1L
+
+    var cycle = 0
+    while (sourcesToFind.isNotEmpty()) {
+        cycle++
+        input.pushButton { impulse ->
+            if (impulse.source in sourcesToFind && impulse.value == SIGNAL_HIGH) {
+                result *= cycle
+                sourcesToFind.remove(impulse.source)
+            }
+        }
+    }
+
+    return result
+}
+
+private fun Modules.pushButton(onImpulse: (Impulse) -> Unit) {
+    val queue = ArrayDeque<Impulse>()
+
+    fun addImpulses(impulses: List<Impulse>) {
+        for (impulse in impulses) {
+            queue.addLast(impulse)
+            onImpulse(impulse)
         }
     }
 
@@ -57,8 +69,6 @@ private fun Modules.pushButton(): Pair<Int, Int> {
         val destination = get(impulse.destination) ?: continue
         addImpulses(destination.processImpulse(impulse))
     }
-
-    return lowCount to highCount
 }
 
 private fun readInput(name: String): Modules {
@@ -123,6 +133,7 @@ private sealed interface CommunicationModule {
         override val destinations: List<String>
     ) : CommunicationModule {
         private val memory = mutableMapOf<String, Int>()
+        val inputs: Set<String> = memory.keys
 
         fun registerInput(label: String) {
             memory[label] = SIGNAL_LOW
