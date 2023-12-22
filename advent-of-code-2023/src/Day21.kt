@@ -31,15 +31,16 @@ private fun part1(input: Matrix<Char>, steps: Int): Int {
 }
 
 private fun part2(input: Matrix<Char>): Long {
-    val start = Position(input.rowCount / 2, input.columnCount / 2)
-    val stepsInCycle = input.columnCount
+    val patternSize = input.columnCount
+    val patternHalfSize = patternSize / 2
+    val start = Position(patternHalfSize, patternHalfSize)
 
     var evenPlots = 0
     var oddPlots = 0
     val seen = mutableSetOf<Position>()
     val queue = ArrayDeque<Pair<Int, Position>>()
 
-    val steps = stepsInCycle + start.column
+    val steps = patternSize + patternHalfSize
     fun addNextStep(step: Int, position: Position) {
         if (position !in seen && input.getInfinite(position) != '#') {
             seen += position
@@ -57,7 +58,7 @@ private fun part2(input: Matrix<Char>): Long {
         val (step, position) = queue.removeFirst()
         if (lastStep != step) {
             lastStep = step
-            if (step == 65) {
+            if (step == patternHalfSize) {
                 a1 = oddPlots
                 a2 = evenPlots
             }
@@ -66,7 +67,7 @@ private fun part2(input: Matrix<Char>): Long {
     }
 
     val b = oddPlots - a1 - a2 * 4 + 1 // Why +1? I don't know, but it works
-    val patternsCount = (26501365L - start.column) / input.columnCount
+    val patternsCount = (26501365L - patternHalfSize) / patternSize
     var count = a1.toLong()
     for (i in 1L..patternsCount) {
         val a = if (i % 2 == 0L) a1 else a2
