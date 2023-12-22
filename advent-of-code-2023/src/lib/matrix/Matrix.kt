@@ -1,5 +1,7 @@
 package lib.matrix
 
+import printValue
+
 /**
  * 2-dimensional matrix.
  * Assumes that the given [lines] are all equal by length.
@@ -39,3 +41,11 @@ val Matrix<*>.topLeftPosition: Position get() = Position.Zero
 val Matrix<*>.bottomRightPosition: Position get() = Position(lastRowIndex, lastColumnIndex)
 
 fun <T> List<List<T>>.toMatrix(): Matrix<T> = Matrix(this)
+
+/** Prints matrix row by row representing each element as a char. */
+fun <T> Matrix<T>.debugPrint(transform: (position: Position, value: T) -> Char) {
+    for (row in rowIndices) {
+        columnIndices.joinToString(separator = "") { col -> transform(Position(row, col), this[row, col]).toString() }
+            .printValue()
+    }
+}
