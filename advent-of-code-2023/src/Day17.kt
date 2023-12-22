@@ -2,7 +2,6 @@ import lib.matrix.*
 import lib.matrix.Direction.Companion.nextInDirection
 import lib.matrix.Direction.DOWN
 import lib.matrix.Direction.RIGHT
-import lib.matrix.Position
 import kotlin.math.min
 
 private const val DAY = "Day17"

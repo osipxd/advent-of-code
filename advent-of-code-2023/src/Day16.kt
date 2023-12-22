@@ -2,7 +2,6 @@ import lib.countDistinctBy
 import lib.matrix.*
 import lib.matrix.Direction.*
 import lib.matrix.Direction.Companion.nextInDirection
-import lib.matrix.Position
 
 private const val DAY = "Day16"
 

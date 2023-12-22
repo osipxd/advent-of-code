@@ -1,5 +1,4 @@
 import lib.matrix.*
-import lib.matrix.Position
 
 private typealias Platform = Matrix<Char>
 private typealias PlatformSnapshot = List<String>

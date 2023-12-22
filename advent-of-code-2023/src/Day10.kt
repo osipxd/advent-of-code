@@ -1,5 +1,4 @@
 import lib.matrix.*
-import lib.matrix.Position
 
 private typealias Maze = Matrix<Pipe>
 private typealias MazeRow = List<Pipe>
