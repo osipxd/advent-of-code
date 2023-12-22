@@ -1,3 +1,4 @@
+
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -12,10 +13,10 @@ fun main() {
         measureAnswer { part1(input()) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
+    "Part 2" {
+        part2(testInput()) shouldBe 7
+        measureAnswer { part2(input()) }
+    }
 }
 
 private fun part1(input: List<SandBrick>): Int {
@@ -34,16 +35,61 @@ private fun part1(input: List<SandBrick>): Int {
     }
 
     return fallenBricks.count { brick ->
-        val upperBricks = brick.xyPoints().withZ(brick.z2 + 1).mapNotNull { occupied[it] }.distinct()
+        val upperBricks = brick.abovePoints().mapNotNull { occupied[it] }.distinct()
         upperBricks.all { upperBrick ->
-            upperBrick.xyPoints().withZ(upperBrick.z1 - 1).any { xyz ->
+            upperBrick.underPoints().any { xyz ->
                 occupied[xyz] != null && occupied[xyz] != brick
             }
         }
     }
 }
 
-private fun part2(input: List<SandBrick>): Int = TODO()
+private fun part2(input: List<SandBrick>): Int {
+    val fallenBricks = ArrayDeque<SandBrick>()
+    val heights = mutableMapOf<XY, Int>()
+    val occupied = mutableMapOf<XYZ, SandBrick>()
+
+    for (brick in input.sortedBy { it.z1 }) {
+        val xyPoints = brick.xyPoints()
+        brick.z1 = xyPoints.maxOf { heights.getOrDefault(it, 0) } + 1
+        for (xy in xyPoints) {
+            heights[xy] = brick.z2
+            brick.zRange.forEach { z -> occupied[xy.withZ(z)] = brick }
+        }
+        fallenBricks.addFirst(brick)
+    }
+
+    val safeBricks = fallenBricks.filter { brick ->
+        val upperBricks = brick.abovePoints().mapNotNull { occupied[it] }.distinct()
+        upperBricks.all { upperBrick ->
+            upperBrick.underPoints().any { xyz ->
+                occupied[xyz] != null && occupied[xyz] != brick
+            }
+        }
+    }.toSet()
+    val unsafeBricks = input.filterNot { it in safeBricks }
+
+    return unsafeBricks.sumOf { startBrick ->
+        val queue = ArrayDeque<SandBrick>()
+        val visited = mutableSetOf<SandBrick>()
+
+        fun addBrick(nextBrick: SandBrick) {
+            if (visited.add(nextBrick)) queue.addLast(nextBrick)
+        }
+        addBrick(startBrick)
+
+        while (queue.isNotEmpty()) {
+            val brick = queue.removeFirst()
+            for (upperBrick in brick.abovePoints().mapNotNull { occupied[it] }) {
+                val willFall = upperBrick.underPoints().asSequence()
+                    .mapNotNull { occupied[it] }
+                    .all { it in visited }
+                if (willFall) addBrick(upperBrick)
+            }
+        }
+        visited.size - 1
+    }
+}
 
 private fun readInput(name: String) = readLines(name) { line ->
     val (x1, y1, z1, x2, y2, z2) = line.splitInts(",", "~")
@@ -67,6 +113,8 @@ private class SandBrick(
     val zRange get() = z1..z2
 
     fun xyPoints(): List<XY> = xRange.flatMap { x -> yRange.map { y -> XY(x, y) } }
+    fun underPoints(): List<XYZ> = xyPoints().withZ(z1 - 1)
+    fun abovePoints(): List<XYZ> = xyPoints().withZ(z2 + 1)
 }
 
 private data class XY(val x: Int, val y: Int) {
