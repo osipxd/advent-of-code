@@ -1,11 +1,9 @@
 import lib.graph.Graph
 import lib.graph.GraphNode
 import lib.graph.GraphNode.Companion.connectToNext
-import lib.graph.walkFromRoots
 import lib.matrix.*
 import lib.matrix.Direction.*
 import lib.matrix.Direction.Companion.nextInDirection
-import kotlin.math.max
 
 private const val DAY = "Day23"
 
@@ -18,31 +16,36 @@ fun main() {
         measureAnswer { part1(input()) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
+    "Part 2" {
+        part2(testInput()) shouldBe 154
+        measureAnswer { part2(input()) }
+    }
 }
 
-private fun part1(input: Matrix<Char>): Int {
-    val graph = buildGraph(input)
-    val longestPath = mutableMapOf<Position, Int>()
+private fun part1(input: Matrix<Char>) = findLongestPath(input, twoWay = false)
+private fun part2(input: Matrix<Char>) = findLongestPath(input, twoWay = true)
 
-    graph.walkFromRoots { node ->
-        val currentPath = longestPath.getOrDefault(node.value, defaultValue = 0)
-        for ((nextNode, path) in node.next) {
-            val currentPathToNext = longestPath.getOrDefault(nextNode.value, defaultValue = 0)
-            longestPath[nextNode.value] = max(currentPathToNext, currentPath + path)
+private fun findLongestPath(input: Matrix<Char>, twoWay: Boolean): Int {
+    val graph = buildGraph(input, twoWay)
+    val endPosition = input.bottomRightPosition.offsetBy(column = -1)
+
+    fun longestPath(node: GraphNode<Position>, seen: Set<Position>): Int {
+        if (node.value == endPosition) return 0
+        val nextNodes = node.next
+            .filter { (node, _) -> node.value !in seen }
+            .ifEmpty { return -1 }
+
+        val seenWithThis = seen + node.value
+        return nextNodes.maxOf { (nextNode, pathToNode) ->
+            val pathFromNode = longestPath(nextNode, seenWithThis)
+            if (pathFromNode == -1) -1 else pathToNode + pathFromNode
         }
     }
 
-    val endPosition = input.bottomRightPosition.offsetBy(column = -1)
-    return longestPath.getValue(endPosition)
+    return longestPath(graph.roots.single(), emptySet())
 }
 
-private fun part2(input: Matrix<Char>): Int = TODO()
-
-private fun buildGraph(input: Matrix<Char>): Graph<Position> {
+private fun buildGraph(input: Matrix<Char>, twoWay: Boolean): Graph<Position> {
     val graph = Graph<Position>()
     val nodesToRoute = ArrayDeque<GraphNode<Position>>()
 
@@ -62,6 +65,7 @@ private fun buildGraph(input: Matrix<Char>): Graph<Position> {
             if (input.isNodeAt(position)) {
                 val nextNode = nextNode(position)
                 node.connectToNext(nextNode, step)
+                if (twoWay && !node.isRoot) nextNode.connectToNext(node, step)
             } else {
                 seen += position
                 queue.addFirst(step to position)

@@ -26,21 +26,6 @@ class Graph<T> : Iterable<GraphNode<T>> {
     override fun iterator(): Iterator<GraphNode<T>> = nodes.values.iterator()
 }
 
-fun <T> Graph<T>.walkFromRoots(visit: (GraphNode<T>) -> Unit) {
-    val queue = ArrayDeque<GraphNode<T>>()
-
-    fun addNext(node: GraphNode<T>) {
-        visit(node)
-        queue.addLast(node)
-    }
-
-    roots.forEach(::addNext)
-    while (queue.isNotEmpty()) {
-        val node = queue.removeFirst()
-        node.nextNodes().forEach(::addNext)
-    }
-}
-
 class GraphNode<T>(
     val value: T,
 ) {
