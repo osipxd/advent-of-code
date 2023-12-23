@@ -1,4 +1,6 @@
-
+import lib.graph.Graph
+import lib.graph.GraphNode
+import lib.graph.GraphNode.Companion.connectToNext
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -20,75 +22,58 @@ fun main() {
 }
 
 private fun part1(input: List<SandBrick>): Int {
-    val fallenBricks = ArrayDeque<SandBrick>()
-    val heights = mutableMapOf<XY, Int>()
-    val occupied = mutableMapOf<XYZ, SandBrick>()
-
-    for (brick in input.sortedBy { it.z1 }) {
-        val xyPoints = brick.xyPoints()
-        brick.z1 = xyPoints.maxOf { heights.getOrDefault(it, 0) } + 1
-        for (xy in xyPoints) {
-            heights[xy] = brick.z2
-            brick.zRange.forEach { z -> occupied[xy.withZ(z)] = brick }
-        }
-        fallenBricks.addFirst(brick)
-    }
-
-    return fallenBricks.count { brick ->
-        val upperBricks = brick.abovePoints().mapNotNull { occupied[it] }.distinct()
-        upperBricks.all { upperBrick ->
-            upperBrick.underPoints().any { xyz ->
-                occupied[xyz] != null && occupied[xyz] != brick
-            }
-        }
-    }
+    val graph = buildGraph(input)
+    return graph.count { node -> node.nextNodes().none { it.previousNodes().count() == 1 } }
 }
 
 private fun part2(input: List<SandBrick>): Int {
-    val fallenBricks = ArrayDeque<SandBrick>()
-    val heights = mutableMapOf<XY, Int>()
-    val occupied = mutableMapOf<XYZ, SandBrick>()
+    val graph = buildGraph(input)
 
-    for (brick in input.sortedBy { it.z1 }) {
-        val xyPoints = brick.xyPoints()
-        brick.z1 = xyPoints.maxOf { heights.getOrDefault(it, 0) } + 1
-        for (xy in xyPoints) {
-            heights[xy] = brick.z2
-            brick.zRange.forEach { z -> occupied[xy.withZ(z)] = brick }
+    return graph.sumOf { startNode ->
+        val queue = ArrayDeque<GraphNode<SandBrick>>()
+        val visited = mutableSetOf<GraphNode<SandBrick>>()
+
+        fun addNextNode(nextNode: GraphNode<SandBrick>) {
+            if (visited.add(nextNode)) queue.addLast(nextNode)
         }
-        fallenBricks.addFirst(brick)
-    }
 
-    val safeBricks = fallenBricks.filter { brick ->
-        val upperBricks = brick.abovePoints().mapNotNull { occupied[it] }.distinct()
-        upperBricks.all { upperBrick ->
-            upperBrick.underPoints().any { xyz ->
-                occupied[xyz] != null && occupied[xyz] != brick
-            }
-        }
-    }.toSet()
-    val unsafeBricks = input.filterNot { it in safeBricks }
-
-    return unsafeBricks.sumOf { startBrick ->
-        val queue = ArrayDeque<SandBrick>()
-        val visited = mutableSetOf<SandBrick>()
-
-        fun addBrick(nextBrick: SandBrick) {
-            if (visited.add(nextBrick)) queue.addLast(nextBrick)
-        }
-        addBrick(startBrick)
-
+        addNextNode(startNode)
         while (queue.isNotEmpty()) {
-            val brick = queue.removeFirst()
-            for (upperBrick in brick.abovePoints().mapNotNull { occupied[it] }) {
-                val willFall = upperBrick.underPoints().asSequence()
-                    .mapNotNull { occupied[it] }
-                    .all { it in visited }
-                if (willFall) addBrick(upperBrick)
-            }
+            val node = queue.removeFirst()
+            node.nextNodes()
+                .filter { nextNode -> nextNode.previousNodes().all { it in visited } }
+                .forEach(::addNextNode)
         }
         visited.size - 1
     }
+}
+
+private fun buildGraph(bricks: List<SandBrick>): Graph<SandBrick> {
+    val graph = Graph<SandBrick>()
+    val topBricks = mutableMapOf<XY, GraphNode<SandBrick>>()
+
+    for (brick in bricks.sortedBy { it.z1 }) {
+        val node = GraphNode(brick)
+
+        val xyPoints = brick.xyPoints()
+        val previousBricks = mutableSetOf<GraphNode<SandBrick>>()
+        var topZ = 0
+        for (previousBrick in xyPoints.mapNotNull { topBricks[it] }) {
+            val currentZ = previousBrick.value.z2
+            if (currentZ > topZ) {
+                topZ = currentZ
+                previousBricks.clear()
+            }
+            if (currentZ == topZ) previousBricks += previousBrick
+        }
+        node.value.z1 = topZ + 1
+        previousBricks.forEach { it.connectToNext(node) }
+        graph += node
+
+        for (xy in xyPoints) topBricks[xy] = node
+    }
+
+    return graph
 }
 
 private fun readInput(name: String) = readLines(name) { line ->
@@ -110,19 +95,10 @@ private class SandBrick(
     val height = abs(z2 - z1) + 1
     var z1 = min(z1, z2)
     val z2 get() = z1 + height - 1
-    val zRange get() = z1..z2
 
     fun xyPoints(): List<XY> = xRange.flatMap { x -> yRange.map { y -> XY(x, y) } }
-    fun underPoints(): List<XYZ> = xyPoints().withZ(z1 - 1)
-    fun abovePoints(): List<XYZ> = xyPoints().withZ(z2 + 1)
 }
 
-private data class XY(val x: Int, val y: Int) {
-    fun withZ(z: Int) = XYZ(x, y, z)
-}
-
-private fun List<XY>.withZ(z: Int) = map { it.withZ(z) }
-
-private data class XYZ(val x: Int, val y: Int, val z: Int)
+private data class XY(val x: Int, val y: Int)
 
 private operator fun <E> List<E>.component6() = get(5)
