@@ -1,3 +1,4 @@
+import lib.component6
 import lib.graph.Graph
 import lib.graph.GraphNode
 import lib.graph.GraphNode.Companion.connectToNext
@@ -100,5 +101,3 @@ private class SandBrick(
 }
 
 private data class XY(val x: Int, val y: Int)
-
-private operator fun <E> List<E>.component6() = get(5)
