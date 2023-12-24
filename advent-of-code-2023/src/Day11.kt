@@ -1,3 +1,4 @@
+import lib.combinations
 import lib.matrix.Matrix
 import lib.matrix.Position
 import kotlin.math.abs
@@ -63,14 +64,6 @@ private fun IntRange.filterAllEmpty(chars: (Int) -> List<Char>): Set<Int> {
 private fun readInput(name: String) = readMatrix(name)
 
 // region Utils
-private fun <T> List<T>.combinations(): Sequence<Pair<T, T>> = sequence {
-    for (i in 0..<lastIndex) {
-        for (j in (i + 1)..lastIndex) {
-            yield(get(i) to get(j))
-        }
-    }
-}
-
 private infix fun Position.distanceTo(other: Position): Int {
     return abs(this.row - other.row) + abs(this.column - other.column)
 }
