@@ -133,14 +133,14 @@ private fun Position.nextBySide(side: Int): Position {
 }
 
 private fun sideOppositeTo(side: Int): Int = when (side) {
-    SIDE_TOP, SIDE_BOTTOM -> MASK_HORIZONTAL xor side
-    SIDE_LEFT, SIDE_RIGHT -> MASK_VERTICAL xor side
+    SIDE_TOP, SIDE_BOTTOM -> MASK_VERTICAL xor side
+    SIDE_LEFT, SIDE_RIGHT -> MASK_HORIZONTAL xor side
     else -> error("Unexpected side: $side")
 }
 
 private const val MASK_ALL = 0b1111
-private const val MASK_HORIZONTAL = 0b1100
-private const val MASK_VERTICAL = 0b0011
+private const val MASK_VERTICAL = 0b1100
+private const val MASK_HORIZONTAL = 0b0011
 private const val MASK_NONE = 0b0000
 
 private const val SIDE_TOP = 0b1000
