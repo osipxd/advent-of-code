@@ -5,3 +5,5 @@
 # Do not publish input files
 */src/**/Day?.txt
 */src/**/Day??.txt
+
+.DS_Store

@@ -11,10 +11,10 @@ fun main() {
         measureAnswer { part1(input()) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
+    "Part 2" {
+        part2(testInput()) shouldBe 31
+        measureAnswer { part2(input()) }
+    }
 }
 
 private fun part1(input: Pair<List<Int>, List<Int>>): Int {
@@ -22,7 +22,11 @@ private fun part1(input: Pair<List<Int>, List<Int>>): Int {
     return listA.indices.sumOf { abs(listA[it] - listB[it]) }
 }
 
-private fun part2(input: List<String>): Int = TODO()
+private fun part2(input: Pair<List<Int>, List<Int>>): Int {
+    val (listA, listB) = input
+    val listBCounts = listB.groupingBy { it }.eachCount()
+    return listA.sumOf { a -> a * listBCounts.getOrDefault(a, 0) }
+}
 
 private fun readInput(name: String): Pair<List<Int>, List<Int>> {
     val listA = mutableListOf<Int>()
