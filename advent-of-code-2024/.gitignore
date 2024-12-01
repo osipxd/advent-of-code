@@ -1,0 +1,11 @@
+.idea/**
+!.idea/fileTemplates
+!.idea/fileTemplates/**
+!.idea/file.template.settings.xml
+
+.kotlin/
+build
+local.properties
+
+# Do not publish input files
+*/src/**/Day??.txt

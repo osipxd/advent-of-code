@@ -5,6 +5,7 @@ Here I'm trying to save Xmas every year, mainly using Kotlin but sometimes with 
 
 Each year's puzzles are placed in separated directory:
 
+- [2024](advent-of-code-2024/README.md)
 - [2023](advent-of-code-2023/README.md)
 - [2022](advent-of-code-2022/README.md)
 
