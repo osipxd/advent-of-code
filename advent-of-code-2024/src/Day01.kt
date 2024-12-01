@@ -18,24 +18,24 @@ fun main() {
 }
 
 private fun part1(input: Pair<List<Int>, List<Int>>): Int {
-    val (listA, listB) = input.map { it.sorted() }
-    return listA.indices.sumOf { abs(listA[it] - listB[it]) }
+    val (lefts, rights) = input.map { it.sorted() }
+    return lefts.indices.sumOf { abs(lefts[it] - rights[it]) }
 }
 
 private fun part2(input: Pair<List<Int>, List<Int>>): Int {
-    val (listA, listB) = input
-    val listBCounts = listB.groupingBy { it }.eachCount()
-    return listA.sumOf { a -> a * listBCounts.getOrDefault(a, 0) }
+    val (lefts, rights) = input
+    val rightsHistogram = rights.groupingBy { it }.eachCount()
+    return lefts.sumOf { left -> left * rightsHistogram.getOrDefault(left, 0) }
 }
 
 private fun readInput(name: String): Pair<List<Int>, List<Int>> {
-    val listA = mutableListOf<Int>()
-    val listB = mutableListOf<Int>()
+    val lefts = mutableListOf<Int>()
+    val rights = mutableListOf<Int>()
     readLines(name) {
-        val (a, b) = it.splitInts("   ")
-        listA.add(a)
-        listB.add(b)
+        val (left, right) = it.splitInts("   ")
+        lefts.add(left)
+        rights.add(right)
     }
 
-    return listA to listB
+    return lefts to rights
 }
