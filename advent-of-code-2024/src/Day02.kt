@@ -9,22 +9,23 @@ fun main() {
 
     "Part 1" {
         part1(testInput()) shouldBe 2
-        measureAnswer { part1(input()) }
+        measureAnswer(expected = 369) { part1(input()) }
     }
 
     "Part 2" {
         part2(testInput()) shouldBe 4
-        measureAnswer { part2(input()) }
+        measureAnswer(expected = 428) { part2(input()) }
     }
 }
 
 private fun part1(input: List<List<Int>>): Int = input.count { it.isSafe() }
 
 private fun part2(input: List<List<Int>>): Int = input.count { line ->
-    var isSafe = line.isSafe()
-    var indexToRemove = 0
+    val unsafeJumpIndex = line.indexOfUnsafeJump()
+    var isSafe = unsafeJumpIndex == -1
+    var indexToRemove = (unsafeJumpIndex - 1).coerceAtLeast(0)
 
-    while (!isSafe && indexToRemove <= line.lastIndex) {
+    while (!isSafe && indexToRemove <= unsafeJumpIndex + 1) {
         val alteredLine = line.toMutableList()
         alteredLine.removeAt(indexToRemove)
         isSafe = alteredLine.isSafe()
@@ -34,25 +35,20 @@ private fun part2(input: List<List<Int>>): Int = input.count { line ->
     isSafe
 }
 
-private fun List<Int>.isSafe(): Boolean {
-    var prev = -1
+private fun List<Int>.isSafe(): Boolean = indexOfUnsafeJump() == -1
+
+private fun List<Int>.indexOfUnsafeJump(): Int {
     var sign = 0
 
-    for (curr in this) {
-        if (prev == -1) {
-            prev = curr
-            continue
+    for (i in 0 until lastIndex) {
+        val diff = get(i) - get(i + 1)
+        if (diff == 0 || abs(diff) > 3 || sign != 0 && diff.sign != sign) {
+            return i
         }
-
-        val diff = curr - prev
-        if (abs(diff) > 3 || diff == 0 || sign != 0 && diff.sign != sign) {
-            return false
-        }
-        prev = curr
         sign = diff.sign
     }
 
-    return true
+    return -1
 }
 
 private fun readInput(name: String) = readLines(name) { it.splitInts() }
