@@ -12,15 +12,27 @@ fun main() {
         measureAnswer { part1(input()) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
+    "Part 2" {
+        part2(testInput()) shouldBe 4
+        measureAnswer { part2(input()) }
+    }
 }
 
 private fun part1(input: List<List<Int>>): Int = input.count { it.isSafe() }
 
-private fun part2(input: List<List<Int>>): Int = TODO()
+private fun part2(input: List<List<Int>>): Int = input.count { line ->
+    var isSafe = line.isSafe()
+    var indexToRemove = 0
+
+    while (!isSafe && indexToRemove <= line.lastIndex) {
+        val alteredLine = line.toMutableList()
+        alteredLine.removeAt(indexToRemove)
+        isSafe = alteredLine.isSafe()
+        indexToRemove++
+    }
+
+    isSafe
+}
 
 private fun List<Int>.isSafe(): Boolean {
     var prev = -1
