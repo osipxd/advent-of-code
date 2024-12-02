@@ -28,14 +28,5 @@ private fun part2(input: Pair<List<Int>, List<Int>>): Int {
     return lefts.sumOf { left -> left * rightsHistogram.getOrDefault(left, 0) }
 }
 
-private fun readInput(name: String): Pair<List<Int>, List<Int>> {
-    val lefts = mutableListOf<Int>()
-    val rights = mutableListOf<Int>()
-    readLines(name) {
-        val (left, right) = it.splitInts("   ")
-        lefts.add(left)
-        rights.add(right)
-    }
-
-    return lefts to rights
-}
+private fun readInput(name: String): Pair<List<Int>, List<Int>> =
+    readLines(name) { it.splitInts("   ").takePair() }.unzip()
