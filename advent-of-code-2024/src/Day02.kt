@@ -22,20 +22,18 @@ private fun part1(input: List<List<Int>>): Int = input.count { it.isSafe() }
 
 private fun part2(input: List<List<Int>>): Int = input.count { line ->
     val unsafeJumpIndex = line.indexOfUnsafeJump()
-    var isSafe = unsafeJumpIndex == -1
+    var isSafe = unsafeJumpIndex == NOT_FOUND
     var indexToRemove = (unsafeJumpIndex - 1).coerceAtLeast(0)
 
     while (!isSafe && indexToRemove <= unsafeJumpIndex + 1) {
-        val alteredLine = line.toMutableList()
-        alteredLine.removeAt(indexToRemove)
-        isSafe = alteredLine.isSafe()
+        isSafe = line.dropAt(indexToRemove).isSafe()
         indexToRemove++
     }
 
     isSafe
 }
 
-private fun List<Int>.isSafe(): Boolean = indexOfUnsafeJump() == -1
+private fun List<Int>.isSafe(): Boolean = indexOfUnsafeJump() == NOT_FOUND
 
 private fun List<Int>.indexOfUnsafeJump(): Int {
     var sign = 0
@@ -52,3 +50,9 @@ private fun List<Int>.indexOfUnsafeJump(): Int {
 }
 
 private fun readInput(name: String) = readLines(name) { it.splitInts() }
+
+// Utils
+
+private const val NOT_FOUND = -1
+
+private fun List<Int>.dropAt(index: Int): List<Int> = toMutableList().apply { removeAt(index) }
