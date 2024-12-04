@@ -1,7 +1,5 @@
-import lib.matrix.Matrix
-import lib.matrix.Position
-import lib.matrix.get
-import lib.matrix.readMatrix
+import lib.matrix.*
+import lib.matrix.Direction.Companion.nextInDirection
 
 private const val DAY = "Day04"
 
@@ -20,54 +18,38 @@ fun main() {
     }
 }
 
-private fun part1(input: Matrix<Char>): Int {
-    return input.positions.sumOf { position ->
-        if (input[position] != 'X') return@sumOf 0
-        directions.count { isXmas(input, position, it) }
-    }
+private fun part1(input: Matrix<Char>): Int =
+    input.positions
+        .filter { input[it] == 'X' }
+        .sumOf { position -> Direction.entries.count { isXmas(input, position, it) } }
+
+private fun isXmas(matrix: Matrix<Char>, position: Position, direction: Direction): Boolean {
+    return matrix.readWord(position, direction, length = 4) == "XMAS"
 }
 
-private const val XMAS = "XMAS"
-
-private fun isXmas(input: Matrix<Char>, position: Position, direction: Pair<Int, Int>): Boolean {
-    var (row, column) = position
-    val (dr, dc) = direction
-    var index = 0
-
-    while (index < XMAS.lastIndex) {
-        row += dr
-        column += dc
-        index++
-        if (row !in input.rowIndices || column !in input.columnIndices || input[row, column] != XMAS[index]) return false
-    }
-
-    return true
-}
-
-private fun part2(input: Matrix<Char>): Int {
-    return input.positions.count { position -> input[position] == 'A' && isX_MAS(input, position) }
-}
+private fun part2(input: Matrix<Char>): Int =
+    input.positions.count { position -> input[position] == 'A' && isX_MAS(input, position) }
 
 private fun isX_MAS(matrix: Matrix<Char>, position: Position): Boolean {
-    val topLeft = position.offsetBy(-1, -1)
-    val bottomLeft = position.offsetBy(-1, +1)
+    val word1 = matrix.readWord(
+        start = position.nextInDirection(Direction.UP_LEFT),
+        direction = Direction.DOWN_RIGHT,
+        length = 3,
+    )
+    val word2 = matrix.readWord(
+        start = position.nextInDirection(Direction.DOWN_LEFT),
+        direction = Direction.UP_RIGHT,
+        length = 3,
+    )
 
-    val mas1 = matrix.walk(topLeft, +1, +1).take(3).joinToString("")
-    val mas2 = matrix.walk(bottomLeft, +1, -1).take(3).joinToString("")
-
-    return (mas1 == "MAS" || mas1 == "SAM") && (mas2 == "MAS" || mas2 == "SAM")
+    return word1.isMas() && word2.isMas()
 }
 
-private fun <T> Matrix<T>.walk(start: Position, rowStep: Int, columnStep: Int): Sequence<T> {
-    return sequence {
-        var (row, column) = start
-        while (row in rowIndices && column in columnIndices) {
-            yield(this@walk[row, column])
-            row += rowStep
-            column += columnStep
-        }
-    }
-}
+private fun String.isMas() = this == "MAS" || this == "SAM"
+
+private fun readInput(name: String) = readMatrix(name)
+
+// Utils
 
 private val Matrix<*>.positions: Sequence<Position>
     get() = sequence {
@@ -78,16 +60,17 @@ private val Matrix<*>.positions: Sequence<Position>
         }
     }
 
-private val directions: Sequence<Pair<Int, Int>>
-    get() = sequenceOf(
-        -1 to -1,
-        -1 to  0,
-        -1 to +1,
-         0 to -1,
-         0 to +1,
-        +1 to -1,
-        +1 to  0,
-        +1 to +1,
-    )
+private fun Matrix<Char>.readWord(start: Position, direction: Direction, length: Int): String {
+    return walk(start, direction).take(length).joinToString("")
+}
 
-private fun readInput(name: String) = readMatrix(name)
+private fun <T> Matrix<T>.walk(start: Position, direction: Direction): Sequence<T> {
+    val matrix = this
+    return sequence {
+        var position = start
+        while (position in matrix) {
+            yield(matrix[position])
+            position = position.nextInDirection(direction)
+        }
+    }
+}
