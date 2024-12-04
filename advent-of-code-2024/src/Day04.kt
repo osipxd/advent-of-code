@@ -14,10 +14,10 @@ fun main() {
         measureAnswer { part1(input()) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
+    "Part 2" {
+        part2(testInput()) shouldBe 9
+        measureAnswer { part2(input()) }
+    }
 }
 
 private fun part1(input: Matrix<Char>): Int {
@@ -44,7 +44,30 @@ private fun isXmas(input: Matrix<Char>, position: Position, direction: Pair<Int,
     return true
 }
 
-private fun part2(input: Matrix<Char>): Int = TODO()
+private fun part2(input: Matrix<Char>): Int {
+    return input.positions.count { position -> input[position] == 'A' && isX_MAS(input, position) }
+}
+
+private fun isX_MAS(matrix: Matrix<Char>, position: Position): Boolean {
+    val topLeft = position.offsetBy(-1, -1)
+    val bottomLeft = position.offsetBy(-1, +1)
+
+    val mas1 = matrix.walk(topLeft, +1, +1).take(3).joinToString("")
+    val mas2 = matrix.walk(bottomLeft, +1, -1).take(3).joinToString("")
+
+    return (mas1 == "MAS" || mas1 == "SAM") && (mas2 == "MAS" || mas2 == "SAM")
+}
+
+private fun <T> Matrix<T>.walk(start: Position, rowStep: Int, columnStep: Int): Sequence<T> {
+    return sequence {
+        var (row, column) = start
+        while (row in rowIndices && column in columnIndices) {
+            yield(this@walk[row, column])
+            row += rowStep
+            column += columnStep
+        }
+    }
+}
 
 private val Matrix<*>.positions: Sequence<Position>
     get() = sequence {
