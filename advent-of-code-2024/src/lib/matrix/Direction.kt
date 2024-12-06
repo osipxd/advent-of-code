@@ -11,6 +11,11 @@ enum class Direction(private val row: Int, private val col: Int) {
     LEFT(row = 0, col = -1),
     UP_LEFT(row = -1, col = -1);
 
+    fun turn90(clockwise: Boolean = true): Direction {
+        val newDirectionOrdinal = (if (clockwise) ordinal + 2 else ordinal - 2).mod(entries.size)
+        return entries[newDirectionOrdinal]
+    }
+
     companion object {
         fun Position.nextInDirection(direction: Direction) = offsetBy(direction.row, direction.col)
     }
