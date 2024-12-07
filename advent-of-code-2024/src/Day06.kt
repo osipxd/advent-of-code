@@ -21,107 +21,90 @@ fun main() {
 
 private fun part1(input: Input): Int {
     val seen = mutableSetOf<Position>()
-    var position = input.start
-    var direction = Direction.UP
-
-    while (position.row in 0..<input.height && position.column in 0..<input.width) {
-        seen.add(position)
-
-        var nextPosition = position.nextInDirection(direction)
-        while (nextPosition in input.obstacles) {
-            direction = direction.turn90()
-            nextPosition = position.nextInDirection(direction)
-        }
-        position = nextPosition
-    }
+    simulateGuard(input) { (position, _), _ -> seen.add(position) }
 
     return seen.size
 }
 
 private fun part2(input: Input): Int {
-    var position = input.start
-    var direction = Direction.UP
-    val possibleObstacles = mutableSetOf<Position>()
+    val visited = mutableSetOf<Position>()
+    var possibleObstaclesCount = 0
 
-    while (true) {
-        var nextPosition = position.nextInDirection(direction)
-        while (nextPosition in input.obstacles) {
-            direction = direction.turn90()
-            nextPosition = position.nextInDirection(direction)
-        }
-
-        if (nextPosition.row !in 0..<input.height || nextPosition.column !in 0..<input.width) {
-            break
-        }
-
-        if (nextPosition !in possibleObstacles &&
-            nextPosition != input.start &&
-            willFormCycle(
-                start = input.start,
-                initialDirection = Direction.UP,
-                obstacles = input.obstacles + nextPosition,
-                size = input.width to input.height
-            )
-        ) {
-            possibleObstacles.add(nextPosition)
-        }
-
-        position = nextPosition
+    fun willFormCycle(start: Position, initialDirection: Direction, obstacles: Set<Position>): Boolean {
+        val seen = mutableSetOf<Pair<Position, Direction>>()
+        simulateGuard(input, start, initialDirection, obstacles) { state, _ -> if (!seen.add(state)) return true }
+        return false
     }
 
-    return possibleObstacles.size
+    simulateGuard(input) { (position, _), (nextPosition, nextDirection) ->
+        visited.add(position)
+
+        if (nextPosition !in visited &&
+            willFormCycle(
+                start = position,
+                initialDirection = nextDirection.turn90(),
+                obstacles = input.obstacles + nextPosition,
+            )
+        ) {
+            possibleObstaclesCount++
+        }
+    }
+
+    return possibleObstaclesCount
 }
 
-private fun willFormCycle(
-    start: Position,
-    initialDirection: Direction,
-    obstacles: Set<Position>,
-    size: Pair<Int, Int>
-): Boolean {
-    val seen = mutableSetOf<Pair<Position, Direction>>()
-    val (width, height) = size
+private inline fun simulateGuard(
+    input: Input,
+    start: Position = input.start,
+    initialDirection: Direction = Direction.UP,
+    obstacles: Set<Position> = input.obstacles,
+    onEachStep: (State, State) -> Unit = { _, _ -> },
+) {
     var position = start
     var direction = initialDirection
 
-    while (position.row in 0..<height && position.column in 0..<width) {
-        if (!seen.add(position to direction)) return true
-
+    while (position in input.bounds) {
+        val previousDirection = direction
         var nextPosition = position.nextInDirection(direction)
         while (nextPosition in obstacles) {
             direction = direction.turn90()
             nextPosition = position.nextInDirection(direction)
         }
+
+        onEachStep(position to previousDirection, nextPosition to direction)
         position = nextPosition
     }
-
-    return false
 }
 
 private fun readInput(name: String): Input {
-    var width = 0
-    var height = 0
+    val lines = readLines(name)
     val obstacles = mutableSetOf<Position>()
     var start: Position? = null
 
-    readLines(name) { line ->
-        height++
-        if (width == 0) width = line.length
-
+    for ((row, line) in lines.withIndex()) {
         for ((column, char) in line.withIndex()) {
-            if (char == '#') {
-                obstacles += Position(height - 1, column)
-            } else if (char == '^') {
-                start = Position(height - 1, column)
+            when (char) {
+                '#' -> obstacles += Position(row, column)
+                '^' -> start = Position(row, column)
             }
         }
     }
 
-    return Input(start!!, width, height, obstacles)
+    return Input(
+        start = start!!,
+        bounds = Bounds(lines.indices, lines.first().indices),
+        obstacles = obstacles
+    )
 }
+
+private typealias State = Pair<Position, Direction>
 
 private data class Input(
     val start: Position,
-    val width: Int,
-    val height: Int,
+    val bounds: Bounds,
     val obstacles: Set<Position>,
 )
+
+private data class Bounds(val rowBounds: IntRange, val columnBounds: IntRange) {
+    operator fun contains(position: Position): Boolean = position.row in rowBounds && position.column in columnBounds
+}
