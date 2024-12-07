@@ -15,28 +15,24 @@ fun main() {
     }
 }
 
-private fun part1(input: List<Equation>): Long =
-    input.filter { isPossibleEquation(it.numbers, it.testValue) }
+private fun part1(input: List<Equation>): Long = sumValidEquations(input, listOf(Long::plus, Long::times))
+private fun part2(input: List<Equation>): Long = sumValidEquations(input, listOf(Long::plus, Long::times, Long::concat))
+
+private fun sumValidEquations(input: List<Equation>, operators: List<Operator>): Long =
+    input.filter { testEquation(it.numbers, it.testValue, operators) }
         .sumOf { it.testValue }
 
-private fun part2(input: List<Equation>): Long =
-    input.filter { isPossibleEquation(it.numbers, it.testValue, useConcatenation = true) }
-        .sumOf { it.testValue }
-
-private fun isPossibleEquation(numbers: List<Long>, testValue: Long, useConcatenation: Boolean = false): Boolean {
-    fun check(index: Int, value: Long, nextIndex: Int = index + 1): Boolean = when {
+private fun testEquation(numbers: List<Long>, testValue: Long, operators: List<Operator>): Boolean {
+    fun test(index: Int, value: Long): Boolean = when {
         index == numbers.lastIndex -> value == testValue
         value > testValue -> false
-
-        else -> check(nextIndex, value + numbers[nextIndex]) ||
-            check(nextIndex, value * numbers[nextIndex]) ||
-            useConcatenation && check(nextIndex, value concat numbers[nextIndex])
+        else -> operators.any { operator -> test(index + 1, operator(value, numbers[index + 1])) }
     }
 
-    return check(index = 0, value = numbers.first())
+    return test(index = 0, value = numbers[0])
 }
 
-private infix fun Long.concat(other: Long): Long = (this.toString() + other.toString()).toLong()
+private infix fun Long.concat(other: Long): Long = "$this$other".toLong()
 
 private fun readInput(name: String) = readLines(name) { line ->
     Equation(
@@ -45,7 +41,5 @@ private fun readInput(name: String) = readLines(name) { line ->
     )
 }
 
-private data class Equation(
-    val numbers: List<Long>,
-    val testValue: Long,
-)
+private typealias Operator = (Long, Long) -> Long
+private data class Equation(val numbers: List<Long>, val testValue: Long)
