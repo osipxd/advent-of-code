@@ -12,6 +12,10 @@ private fun path(name: String) = Path("src", "$name.txt")
 fun String.splitInts(vararg delimiters: String = arrayOf(" ", ",", ", ")): List<Int> =
     split(*delimiters).map(String::toInt)
 
+/** Splits [this] string and converts each part to [Long]. */
+fun String.splitLongs(vararg delimiters: String = arrayOf(" ", ",", ", ")): List<Long> =
+    split(*delimiters).map(String::toLong)
+
 /** Takes two elements from [this] list and creates [Pair] of it. */
 fun <T> List<T>.takePair(): Pair<T, T> = get(0) to get(1)
 
