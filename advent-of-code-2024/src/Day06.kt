@@ -1,6 +1,8 @@
+import lib.matrix.Bounds
 import lib.matrix.Direction
 import lib.matrix.Direction.Companion.nextInDirection
 import lib.matrix.Position
+import lib.matrix.contains
 
 private const val DAY = "Day06"
 
@@ -102,7 +104,3 @@ private data class GuardSituationMap(
     val bounds: Bounds,
     val obstacles: Set<Position>,
 )
-
-private data class Bounds(val rowBounds: IntRange, val columnBounds: IntRange) {
-    operator fun contains(position: Position): Boolean = position.row in rowBounds && position.column in columnBounds
-}
