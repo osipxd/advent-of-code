@@ -1,8 +1,4 @@
-import lib.matrix.Bounds
-import lib.matrix.Direction
-import lib.matrix.Direction.Companion.nextInDirection
-import lib.matrix.Position
-import lib.matrix.contains
+import lib.matrix.*
 
 private const val DAY = "Day06"
 
@@ -56,10 +52,10 @@ private inline fun simulateGuardPath(
         if (!visitedStates.add(position to direction)) return CYCLE_PATH
         visitedPositions.add(position)
 
-        var nextPosition = position.nextInDirection(direction)
+        var nextPosition = position.nextBy(direction)
         while (nextPosition in obstacles) {
             direction = direction.turn90()
-            nextPosition = position.nextInDirection(direction)
+            nextPosition = position.nextBy(direction)
         }
 
         onEachStep(GuardPathSimulationContext(position, nextPosition, direction, visitedPositions))

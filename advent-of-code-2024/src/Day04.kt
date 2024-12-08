@@ -1,5 +1,4 @@
 import lib.matrix.*
-import lib.matrix.Direction.Companion.nextInDirection
 
 private const val DAY = "Day04"
 
@@ -32,12 +31,12 @@ private fun part2(input: Matrix<Char>): Int =
 
 private fun isX_MAS(matrix: Matrix<Char>, position: Position): Boolean {
     val word1 = matrix.readWord(
-        start = position.nextInDirection(Direction.UP_LEFT),
+        start = position.nextBy(Direction.UP_LEFT),
         direction = Direction.DOWN_RIGHT,
         length = 3,
     )
     val word2 = matrix.readWord(
-        start = position.nextInDirection(Direction.DOWN_LEFT),
+        start = position.nextBy(Direction.DOWN_LEFT),
         direction = Direction.UP_RIGHT,
         length = 3,
     )
@@ -55,13 +54,5 @@ private fun Matrix<Char>.readWord(start: Position, direction: Direction, length:
     return walk(start, direction).take(length).joinToString("")
 }
 
-private fun <T> Matrix<T>.walk(start: Position, direction: Direction): Sequence<T> {
-    val matrix = this
-    return sequence {
-        var position = start
-        while (position in matrix) {
-            yield(matrix[position])
-            position = position.nextInDirection(direction)
-        }
-    }
-}
+private fun <T> Matrix<T>.walk(start: Position, direction: Direction): Sequence<T> =
+    start.walk(direction, bounds).map { get(it) }

@@ -1,7 +1,7 @@
 package lib.matrix
 
 /** Represents directions of movement in Matrix. */
-enum class Direction(private val row: Int, private val col: Int) {
+enum class Direction(override val row: Int, override val col: Int) : MatrixVector {
     UP(row = -1, col = 0),
     UP_RIGHT(row = -1, col = +1),
     RIGHT(row = 0, col = +1),
@@ -15,8 +15,7 @@ enum class Direction(private val row: Int, private val col: Int) {
         val newDirectionOrdinal = (if (clockwise) ordinal + 2 else ordinal - 2).mod(entries.size)
         return entries[newDirectionOrdinal]
     }
-
-    companion object {
-        fun Position.nextInDirection(direction: Direction) = offsetBy(direction.row, direction.col)
-    }
 }
+
+/** An alias for movement in the specified [direction] as operator 'plus' might not be convenient to use. */
+fun Position.nextBy(direction: Direction) = offsetBy(direction.row, direction.col)

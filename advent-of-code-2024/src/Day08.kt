@@ -23,16 +23,14 @@ private fun part2(input: AntennasMap): Int = countAntinodes(input, resonantHarmo
 
 private fun countAntinodes(input: AntennasMap, resonantHarmonics: Boolean = false): Int {
     fun propagateSignal(pos1: Position, pos2: Position): Sequence<Position> {
-        val dr = pos1.row - pos2.row
-        val dc = pos1.column - pos2.column
-
+        val vector = MatrixVector.between(pos1, pos2)
         return when (resonantHarmonics) {
-            false -> sequenceOf(pos1.offsetBy(dr, dc), pos2.offsetBy(-dr, -dc)).filter { it in input.bounds }
-            true -> pos1.walk(dr, dc, input.bounds) + pos2.walk(-dr, -dc, input.bounds)
+            true -> pos1.walk(-vector, input.bounds) + pos2.walk(vector, input.bounds)
+            false -> sequenceOf(pos1 - vector, pos2 + vector).filter { it in input.bounds }
         }
     }
 
-    return input.antennas.values.asSequence()
+    return input.antennaGroups.asSequence()
         .flatMap { it.pairCombinations() }
         .flatMap { (pos1, pos2) -> propagateSignal(pos1, pos2) }
         .distinct()
@@ -41,26 +39,16 @@ private fun countAntinodes(input: AntennasMap, resonantHarmonics: Boolean = fals
 
 private fun readInput(name: String): AntennasMap {
     val rawMap = readMatrix(name)
-    val antennas = buildMap<Char, MutableList<Position>> {
+    val antennaGroups = buildMap<Char, MutableList<Position>> {
         rawMap.positions()
             .filter { rawMap[it] != '.' }
             .forEach { position -> getOrPut(rawMap[position], ::mutableListOf).add(position) }
     }
 
-    return AntennasMap(rawMap.bounds, antennas)
+    return AntennasMap(rawMap.bounds, antennaGroups.values)
 }
 
 private data class AntennasMap(
     val bounds: Bounds,
-    val antennas: Map<Char, List<Position>>
+    val antennaGroups: Collection<List<Position>>
 )
-
-// Utils
-
-private fun Position.walk(rowStep: Int, columnStep: Int, bounds: Bounds): Sequence<Position> = sequence {
-    var position = this@walk
-    while (position in bounds) {
-        yield(position)
-        position = position.offsetBy(rowStep, columnStep)
-    }
-}
