@@ -19,64 +19,64 @@ fun main() {
     }
 }
 
-private fun part1(input: Input): Int {
-    val seen = mutableSetOf<Position>()
-    simulateGuard(input) { (position, _), _ -> seen.add(position) }
+private fun part1(input: GuardSituationMap): Int = simulateGuardPath(input)
 
-    return seen.size
-}
+private fun part2(input: GuardSituationMap): Int {
+    var count = 0
 
-private fun part2(input: Input): Int {
-    val visited = mutableSetOf<Position>()
-    var possibleObstaclesCount = 0
+    fun GuardPathSimulationContext.willFormCycle(addObstacleAt: Position): Boolean =
+        simulateGuardPath(input, position, nextDirection.turn90(), input.obstacles + addObstacleAt) == CYCLE_PATH
 
-    fun willFormCycle(start: Position, initialDirection: Direction, obstacles: Set<Position>): Boolean {
-        val seen = mutableSetOf<Pair<Position, Direction>>()
-        simulateGuard(input, start, initialDirection, obstacles) { state, _ -> if (!seen.add(state)) return true }
-        return false
+    simulateGuardPath(input) {
+        if (nextPosition !in visited && willFormCycle(addObstacleAt = nextPosition)) count++
     }
 
-    simulateGuard(input) { (position, _), (nextPosition, nextDirection) ->
-        visited.add(position)
-
-        if (nextPosition !in visited &&
-            willFormCycle(
-                start = position,
-                initialDirection = nextDirection.turn90(),
-                obstacles = input.obstacles + nextPosition,
-            )
-        ) {
-            possibleObstaclesCount++
-        }
-    }
-
-    return possibleObstaclesCount
+    return count
 }
 
-private inline fun simulateGuard(
-    input: Input,
+/**
+ * Simulates guard's path considering given input circumstances and returns number of visited positions
+ * at the moment the guard leaves the map. Or [CYCLE_PATH] if the guard can't escape.
+ */
+private inline fun simulateGuardPath(
+    input: GuardSituationMap,
     start: Position = input.start,
     initialDirection: Direction = Direction.UP,
     obstacles: Set<Position> = input.obstacles,
-    onEachStep: (State, State) -> Unit = { _, _ -> },
-) {
+    onEachStep: GuardPathSimulationContext.() -> Unit = {},
+): Int {
+    val visitedPositions = mutableSetOf<Position>()
+    val visitedStates = mutableSetOf<Pair<Position, Direction>>()
     var position = start
     var direction = initialDirection
 
     while (position in input.bounds) {
-        val previousDirection = direction
+        if (!visitedStates.add(position to direction)) return CYCLE_PATH
+        visitedPositions.add(position)
+
         var nextPosition = position.nextInDirection(direction)
         while (nextPosition in obstacles) {
             direction = direction.turn90()
             nextPosition = position.nextInDirection(direction)
         }
 
-        onEachStep(position to previousDirection, nextPosition to direction)
+        onEachStep(GuardPathSimulationContext(position, nextPosition, direction, visitedPositions))
         position = nextPosition
     }
+
+    return visitedPositions.size
 }
 
-private fun readInput(name: String): Input {
+private const val CYCLE_PATH = -1
+
+private data class GuardPathSimulationContext(
+    val position: Position,
+    val nextPosition: Position,
+    val nextDirection: Direction,
+    val visited: Set<Position>,
+)
+
+private fun readInput(name: String): GuardSituationMap {
     val lines = readLines(name)
     val obstacles = mutableSetOf<Position>()
     var start: Position? = null
@@ -90,16 +90,14 @@ private fun readInput(name: String): Input {
         }
     }
 
-    return Input(
+    return GuardSituationMap(
         start = start!!,
         bounds = Bounds(lines.indices, lines.first().indices),
         obstacles = obstacles
     )
 }
 
-private typealias State = Pair<Position, Direction>
-
-private data class Input(
+private data class GuardSituationMap(
     val start: Position,
     val bounds: Bounds,
     val obstacles: Set<Position>,
