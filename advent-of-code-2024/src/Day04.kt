@@ -19,7 +19,7 @@ fun main() {
 }
 
 private fun part1(input: Matrix<Char>): Int =
-    input.positions
+    input.positions()
         .filter { input[it] == 'X' }
         .sumOf { position -> Direction.entries.count { isXmas(input, position, it) } }
 
@@ -28,7 +28,7 @@ private fun isXmas(matrix: Matrix<Char>, position: Position, direction: Directio
 }
 
 private fun part2(input: Matrix<Char>): Int =
-    input.positions.count { position -> input[position] == 'A' && isX_MAS(input, position) }
+    input.positions().count { position -> input[position] == 'A' && isX_MAS(input, position) }
 
 private fun isX_MAS(matrix: Matrix<Char>, position: Position): Boolean {
     val word1 = matrix.readWord(
@@ -50,15 +50,6 @@ private fun String.isMas() = this == "MAS" || this == "SAM"
 private fun readInput(name: String) = readMatrix(name)
 
 // Utils
-
-private val Matrix<*>.positions: Sequence<Position>
-    get() = sequence {
-        for (row in rowIndices) {
-            for (column in columnIndices) {
-                yield(Position(row, column))
-            }
-        }
-    }
 
 private fun Matrix<Char>.readWord(start: Position, direction: Direction, length: Int): String {
     return walk(start, direction).take(length).joinToString("")

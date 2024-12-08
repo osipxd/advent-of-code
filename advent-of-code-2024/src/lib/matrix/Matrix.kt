@@ -38,6 +38,9 @@ class Matrix<T>(lines: List<List<T>>) {
     private fun index(row: Int, column: Int): Int = row * columnCount + column
 }
 
+fun Matrix<*>.positions(): Sequence<Position> =
+    sequence { for (row in rowIndices) for (column in columnIndices) yield(Position(row, column)) }
+
 val Matrix<*>.topLeftPosition: Position get() = Position.Zero
 val Matrix<*>.bottomRightPosition: Position get() = Position(lastRowIndex, lastColumnIndex)
 
@@ -53,4 +56,4 @@ fun <T> Matrix<T>.debugPrint(transform: (position: Position, value: T) -> Char) 
 
 fun readMatrix(fileName: String): Matrix<Char> = readMatrix(fileName) { line -> line.map { it } }
 fun <T> readMatrix(fileName: String, lineElements: (String) -> List<T>): Matrix<T> =
-     readLines(fileName, lineElements).toMatrix()
+    readLines(fileName, lineElements).toMatrix()
