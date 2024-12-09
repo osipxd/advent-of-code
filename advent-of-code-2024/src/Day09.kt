@@ -1,4 +1,6 @@
+import lib.moveStartBy
 import lib.rangeOfSize
+import lib.size
 
 private const val DAY = "Day09"
 
@@ -54,7 +56,45 @@ private fun part1(input: Pair<List<Int>, List<Int>>): Long {
     return checksum
 }
 
-private fun part2(input: Pair<List<Int>, List<Int>>): Long = TODO()
+private fun part2(input: Pair<List<Int>, List<Int>>): Long {
+    val (files, freeSpaces) = input
+
+    // I. Precalculate indexes of files and free spaces
+    val filesIndexes = mutableMapOf<Int, Int>()
+    val freeSpaceRanges = mutableListOf<IntRange>()
+
+    var index = 0
+    for (cursor in files.indices) {
+        filesIndexes[cursor] = index
+        index += files[cursor]
+        if (cursor <= freeSpaces.lastIndex) {
+            freeSpaceRanges.add(index rangeOfSize freeSpaces[cursor])
+            index += freeSpaces[cursor]
+        }
+    }
+
+    // II. Rearrange files and calculate checksum
+    var checksum = 0L
+
+    for (cursor in files.indices.reversed()) {
+        val fileSize = files[cursor]
+        val freeSpaceIndex = freeSpaceRanges.asSequence()
+            .take(cursor)
+            .indexOfFirst { it.size >= fileSize }
+
+        val fileStartIndex = if (freeSpaceIndex == -1) {
+            filesIndexes.getValue(cursor)
+        } else {
+            val range = freeSpaceRanges[freeSpaceIndex]
+            freeSpaceRanges[freeSpaceIndex] = range moveStartBy fileSize
+            range.start
+        }
+
+        checksum += checksumOf(fileStartIndex, fileId = cursor, fileSize = fileSize)
+    }
+
+    return checksum
+}
 
 private fun checksumOf(startIndex: Int, fileId: Int, fileSize: Int): Long {
     return (startIndex rangeOfSize fileSize).sumOf { index -> (index * fileId).toLong() }
