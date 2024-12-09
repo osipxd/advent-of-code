@@ -59,7 +59,7 @@ private fun part1(input: Pair<List<Int>, List<Int>>): Long {
 private fun part2(input: Pair<List<Int>, List<Int>>): Long {
     val (files, freeSpaces) = input
 
-    // I. Precalculate indexes of files and free spaces
+    // 1. Precalculate indexes of files and free spaces
     val filesIndexes = mutableMapOf<Int, Int>()
     val freeSpaceRanges = mutableListOf<IntRange>()
 
@@ -73,27 +73,25 @@ private fun part2(input: Pair<List<Int>, List<Int>>): Long {
         }
     }
 
-    // II. Rearrange files and calculate checksum
-    var checksum = 0L
-
-    for (cursor in files.indices.reversed()) {
-        val fileSize = files[cursor]
+    // 2. Define file rearrangement logic
+    fun findPlaceForFile(fileId: Int): Int {
+        val fileSize = files[fileId]
         val freeSpaceIndex = freeSpaceRanges.asSequence()
-            .take(cursor)
+            .take(fileId)
             .indexOfFirst { it.size >= fileSize }
 
-        val fileStartIndex = if (freeSpaceIndex == -1) {
-            filesIndexes.getValue(cursor)
+        return if (freeSpaceIndex == -1) {
+            filesIndexes.getValue(fileId)
         } else {
             val range = freeSpaceRanges[freeSpaceIndex]
             freeSpaceRanges[freeSpaceIndex] = range moveStartBy fileSize
             range.start
         }
-
-        checksum += checksumOf(fileStartIndex, fileId = cursor, fileSize = fileSize)
     }
 
-    return checksum
+    // 3. Rearrange files using defined logic and calculate checksum
+    return files.indices.reversed()
+        .sumOf { fileId -> checksumOf(findPlaceForFile(fileId), fileId = fileId, fileSize = files[fileId]) }
 }
 
 private fun checksumOf(startIndex: Int, fileId: Int, fileSize: Int): Long {
