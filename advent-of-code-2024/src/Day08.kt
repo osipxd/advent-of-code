@@ -25,7 +25,7 @@ private fun countAntinodes(input: AntennasMap, resonantHarmonics: Boolean = fals
     fun propagateSignal(pos1: Position, pos2: Position): Sequence<Position> {
         val vector = MatrixVector.between(pos1, pos2)
         return when (resonantHarmonics) {
-            true -> pos1.walk(-vector, input.bounds) + pos2.walk(vector, input.bounds)
+            true -> pos1.walk(-vector).inBounds(input.bounds) + pos2.walk(vector).inBounds(input.bounds)
             false -> sequenceOf(pos1 - vector, pos2 + vector).filter { it in input.bounds }
         }
     }

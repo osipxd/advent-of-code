@@ -55,4 +55,4 @@ private fun Matrix<Char>.readWord(start: Position, direction: Direction, length:
 }
 
 private fun <T> Matrix<T>.walk(start: Position, direction: Direction): Sequence<T> =
-    start.walk(direction, bounds).map { get(it) }
+    start.walk(direction).inBounds(bounds).map { get(it) }

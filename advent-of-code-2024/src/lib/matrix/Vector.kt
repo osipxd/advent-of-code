@@ -21,11 +21,12 @@ operator fun MatrixVector.unaryMinus(): MatrixVector = MatrixVector(-row, -col)
 operator fun Position.plus(vector: MatrixVector): Position = offsetBy(vector.row, vector.col)
 operator fun Position.minus(vector: MatrixVector): Position = offsetBy(-vector.row, -vector.col)
 
-fun Position.walk(vector: MatrixVector, bounds: Bounds): Sequence<Position> = sequence {
+fun Position.walk(vector: MatrixVector): Sequence<Position> = sequence {
     var position = this@walk
-    while (position in bounds) {
+    while (true) {
         yield(position)
         position += vector
     }
 }
 
+fun Sequence<Position>.inBounds(bounds: Bounds) = takeWhile { it in bounds }
