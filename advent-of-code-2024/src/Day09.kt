@@ -22,36 +22,43 @@ fun main() {
 private fun part1(input: Pair<List<Int>, List<Int>>): Long {
     val (files, freeSpaces) = input
 
-    var index = 0
-    var cursor = 0
-    var moveFileCursor = files.lastIndex
-    var remainingFile = 0
+    var position = 0
+    var forwardCursor = 0
+    var backwardCursor = files.lastIndex
+    var pendingFileSize = 0
     var checksum = 0L
 
     fun placeFile(fileId: Int, fileSize: Int) {
-        checksum += checksumOf(index, fileId, fileSize)
-        index += fileSize
+        checksum += checksumOf(position, fileId, fileSize)
+        position += fileSize
     }
 
-    while (cursor < moveFileCursor) {
-        // 1. Place the current file
-        placeFile(fileId = cursor, fileSize = files[cursor])
+    while (forwardCursor < backwardCursor) {
+        // 1. Place the file at forward cursor position
+        placeFile(fileId = forwardCursor, fileSize = files[forwardCursor])
 
-        // 2. Move files from the end of the list to the free space after the current file
-        var freeSpace = freeSpaces[cursor]
-        while (freeSpace > 0 && cursor < moveFileCursor) {
-            val moveFileSize = if (remainingFile == 0) files[moveFileCursor] else remainingFile
+        // 2. Fill the following free space with files from the end
+        // If a file doesn't fit completely:
+        // - Place what fits
+        // - Store remaining size in pendingFileSize for next iteration
+        // - Keep the same backwardCursor until full file is placed
+        var freeSpace = freeSpaces[forwardCursor]
+        while (freeSpace > 0 && forwardCursor < backwardCursor) {
+            val moveFileSize = if (pendingFileSize != 0) pendingFileSize else files[backwardCursor]
             freeSpace -= moveFileSize
-            remainingFile = (-freeSpace).coerceAtLeast(0)
-            placeFile(fileId = moveFileCursor, fileSize = moveFileSize - remainingFile)
+            // Negative freeSpace means the file didn't fit completely
+            pendingFileSize = (-freeSpace).coerceAtLeast(0)
+            placeFile(fileId = backwardCursor, fileSize = moveFileSize - pendingFileSize)
 
-            if (remainingFile == 0) moveFileCursor--
+            if (pendingFileSize == 0) backwardCursor--
         }
 
-        // 3. Move to the next file and free space
-        cursor++
+        // 3. Advance to next file and its following free space
+        forwardCursor++
     }
-    if (remainingFile > 0) placeFile(fileId = moveFileCursor, fileSize = remainingFile)
+
+    // Handle any remaining partial file that didn't fit in the last free space
+    if (pendingFileSize > 0) placeFile(fileId = backwardCursor, fileSize = pendingFileSize)
 
     return checksum
 }
