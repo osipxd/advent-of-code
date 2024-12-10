@@ -42,7 +42,7 @@ private fun countTrailheadScore(input: Matrix<Int>, trailhead: Position, allTrai
 
         Direction.orthogonal.forEach { direction ->
             val nextPosition = position.nextBy(direction)
-            if (nextPosition in input && input[nextPosition] == nextStep) addNext(nextPosition, nextStep)
+            if (input.getOrNull(nextPosition) == nextStep) addNext(nextPosition, nextStep)
         }
     }
 

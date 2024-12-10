@@ -21,3 +21,5 @@ operator fun <T> Matrix<T>.get(position: Position): T = this[position.row, posit
 operator fun <T> Matrix<T>.set(position: Position, value: T) {
     this[position.row, position.column] = value
 }
+
+fun <T> Matrix<T>.getOrNull(position: Position): T? = this.getOrNull(position.row, position.column)
