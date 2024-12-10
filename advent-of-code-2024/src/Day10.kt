@@ -13,27 +13,30 @@ fun main() {
         measureAnswer { part1(input()) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
+    "Part 2" {
+        part2(testInput()) shouldBe 81
+        measureAnswer { part2(input()) }
+    }
 }
 
-private fun part1(input: TopologicalMap): Int =
+private fun part1(input: TopologicalMap): Int = solve(input, allTrails = false)
+private fun part2(input: TopologicalMap): Int = solve(input, allTrails = true)
+
+private fun solve(input: TopologicalMap, allTrails: Boolean): Int =
     input.positions()
         .filter { input[it] == 0 }
-        .sumOf { countTrailheadScore(input, it) }
+        .sumOf { countTrailheadScore(input, it, allTrails) }
 
-private fun countTrailheadScore(input: Matrix<Int>, trailhead: Position): Int {
+private fun countTrailheadScore(input: Matrix<Int>, trailhead: Position, allTrails: Boolean): Int {
     val seen = mutableSetOf<Position>()
     val queue = ArrayDeque<Pair<Position, Int>>()
 
     fun addNext(position: Position, step: Int) {
-        if (seen.add(position)) queue += position to step
+        if (allTrails || seen.add(position)) queue += position to step
     }
 
     addNext(trailhead, step = 0)
-    while (seen.isNotEmpty()) {
+    while (queue.isNotEmpty()) {
         val (position, step) = queue.removeFirst()
         if (step == 9) return queue.size + 1
         val nextStep = step + 1
@@ -46,7 +49,5 @@ private fun countTrailheadScore(input: Matrix<Int>, trailhead: Position): Int {
 
     return 0
 }
-
-private fun part2(input: TopologicalMap): Int = TODO()
 
 private fun readInput(name: String) = readMatrix(name) { line -> line.map { it.digitToInt() } }
