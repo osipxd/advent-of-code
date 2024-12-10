@@ -23,8 +23,7 @@ private fun part1(input: TopologicalMap): Int = solve(input, allTrails = false)
 private fun part2(input: TopologicalMap): Int = solve(input, allTrails = true)
 
 private fun solve(input: TopologicalMap, allTrails: Boolean): Int =
-    input.positions()
-        .filter { input[it] == 0 }
+    input.valuePositions { it == 0 }
         .sumOf { countTrailheadScore(input, it, allTrails) }
 
 private fun countTrailheadScore(input: Matrix<Int>, trailhead: Position, allTrails: Boolean): Int {

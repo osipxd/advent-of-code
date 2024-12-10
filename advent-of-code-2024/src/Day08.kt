@@ -40,8 +40,7 @@ private fun countAntinodes(input: AntennasMap, resonantHarmonics: Boolean = fals
 private fun readInput(name: String): AntennasMap {
     val rawMap = readMatrix(name)
     val antennaGroups = buildMap<Char, MutableList<Position>> {
-        rawMap.positions()
-            .filter { rawMap[it] != '.' }
+        rawMap.valuePositions { it != '.' }
             .forEach { position -> getOrPut(rawMap[position], ::mutableListOf).add(position) }
     }
 
