@@ -19,34 +19,36 @@ fun main() {
     }
 }
 
-private fun part1(input: TopologicalMap): Int = solve(input, allTrails = false)
-private fun part2(input: TopologicalMap): Int = solve(input, allTrails = true)
+private fun part1(input: TopologicalMap): Int = calculateTrailheadScores(input, countAllPaths = false)
+private fun part2(input: TopologicalMap): Int = calculateTrailheadScores(input, countAllPaths = true)
 
-private fun solve(input: TopologicalMap, allTrails: Boolean): Int =
-    input.valuePositions { it == 0 }
-        .sumOf { countTrailheadScore(input, it, allTrails) }
+private fun calculateTrailheadScores(input: TopologicalMap, countAllPaths: Boolean): Int =
+    input.valuePositions { it == LOWEST }.sumOf { trailheadScore(input, it, countAllPaths) }
 
-private fun countTrailheadScore(input: Matrix<Int>, trailhead: Position, allTrails: Boolean): Int {
+private fun trailheadScore(map: TopologicalMap, trailhead: Position, countAllPaths: Boolean): Int {
+    data class State(val position: Position, val height: Int)
+
     val seen = mutableSetOf<Position>()
-    val queue = ArrayDeque<Pair<Position, Int>>()
+    val queue = ArrayDeque<State>()
 
-    fun addNext(position: Position, step: Int) {
-        if (allTrails || seen.add(position)) queue += position to step
+    fun addNext(position: Position, height: Int) {
+        if (countAllPaths || seen.add(position)) queue += State(position, height)
     }
 
-    addNext(trailhead, step = 0)
-    while (queue.isNotEmpty()) {
-        val (position, step) = queue.removeFirst()
-        if (step == 9) return queue.size + 1
-        val nextStep = step + 1
-
+    addNext(trailhead, height = LOWEST)
+    while (queue.isNotEmpty() && queue.first().height < HIGHEST) {
+        val (position, height) = queue.removeFirst()
+        val nextHeight = height + 1
         Direction.orthogonal.forEach { direction ->
             val nextPosition = position.nextBy(direction)
-            if (input.getOrNull(nextPosition) == nextStep) addNext(nextPosition, nextStep)
+            if (map.getOrNull(nextPosition) == nextHeight) addNext(nextPosition, nextHeight)
         }
     }
 
-    return 0
+    return queue.size
 }
+
+private const val LOWEST = 0
+private const val HIGHEST = 9
 
 private fun readInput(name: String) = readMatrix(name) { line -> line.map { it.digitToInt() } }
