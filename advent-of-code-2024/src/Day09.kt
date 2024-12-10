@@ -66,8 +66,9 @@ private fun part1(input: Pair<List<Int>, List<Int>>): Long {
 private fun part2(input: Pair<List<Int>, List<Int>>): Long {
     val (files, freeSpaces) = input
 
-    // 1. Build initial arrangement: calculate starting positions for each file
-    // and collect ranges representing available free spaces between files
+    // 1. Build initial arrangement:
+    // - calculate starting positions for each file
+    // - collect ranges representing available free spaces between files
     val filesIndexes = IntArray(files.size)
     val freeSpaceRanges = ArrayList<IntRange>(freeSpaces.size)
 
@@ -81,39 +82,39 @@ private fun part2(input: Pair<List<Int>, List<Int>>): Long {
         }
     }
 
-    // 2. Define optimized file rearrangement logic using caching.
-    // Cache stores the leftmost viable position for each possible file size (0..9).
-    // This lets us skip searching positions that we already know are too small.
+    // 2. Define optimized file rearrangement logic.
+    // Track the leftmost viable position for each possible file size (0..9).
+    // In fact we use 10 forward cursors, one for each file size.
+    val sizeToForwardCursor = IntArray(MAX_FILE_SIZE + 1) { 0 }
 
-    // Maps file size (0..9) to the leftmost index where a suitable free space was found
-    val sizeToStartIndex = IntArray(MAX_FILE_SIZE + 1) { 0 }
-
-    fun updateCache(fileSize: Int, freeSpaceIndex: Int) {
+    fun updateCursors(fileSize: Int, freeSpaceIndex: Int) {
         for (size in fileSize..MAX_FILE_SIZE) {
-            if (sizeToStartIndex[size] < freeSpaceIndex) sizeToStartIndex[size] = freeSpaceIndex else break
+            if (sizeToForwardCursor[size] < freeSpaceIndex) sizeToForwardCursor[size] = freeSpaceIndex else break
         }
     }
 
-    fun findPlaceForFile(fileId: Int): Int {
-        val fileSize = files[fileId]
+    fun findPlaceForFile(backwardCursor: Int): Int {
+        val fileSize = files[backwardCursor]
 
-        val startIndex = sizeToStartIndex[fileSize]
-        val freeSpaceIndex = (startIndex..fileId).find { index -> freeSpaceRanges[index].size >= fileSize }
+        val forwardCursor = sizeToForwardCursor[fileSize]
+        val freeSpaceIndex = (forwardCursor..backwardCursor)
+            .find { index -> freeSpaceRanges[index].size >= fileSize }
 
         return if (freeSpaceIndex != null) {
-            updateCache(fileSize, freeSpaceIndex)
+            updateCursors(fileSize, freeSpaceIndex)
             val range = freeSpaceRanges[freeSpaceIndex]
             freeSpaceRanges[freeSpaceIndex] = range moveStartBy fileSize
             range.start
         } else {
-            updateCache(fileSize, Int.MAX_VALUE) // Don't search free space anymore for this size
-            filesIndexes[fileId]
+            updateCursors(fileSize, Int.MAX_VALUE) // Skip future searches for this size
+            filesIndexes[backwardCursor]
         }
     }
 
     // 3. Process files from right to left, finding optimal positions and calculating checksum
-    return files.indices.reversed()
-        .sumOf { fileId -> checksumOf(findPlaceForFile(fileId), fileId = fileId, fileSize = files[fileId]) }
+    return files.indices.reversed().sumOf { backwardCursor ->
+        checksumOf(findPlaceForFile(backwardCursor), fileId = backwardCursor, fileSize = files[backwardCursor])
+    }
 }
 
 private const val MAX_FILE_SIZE = 9
