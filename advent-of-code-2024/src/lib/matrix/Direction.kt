@@ -15,6 +15,10 @@ enum class Direction(override val row: Int, override val col: Int) : MatrixVecto
         val newDirectionOrdinal = (if (clockwise) ordinal + 2 else ordinal - 2).mod(entries.size)
         return entries[newDirectionOrdinal]
     }
+
+    companion object {
+        val orthogonal: List<Direction> = listOf(UP, DOWN, LEFT, RIGHT)
+    }
 }
 
 /** An alias for movement in the specified [direction] as operator 'plus' might not be convenient to use. */
