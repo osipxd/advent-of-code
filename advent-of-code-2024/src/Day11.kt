@@ -10,30 +10,24 @@ fun main() {
     }
 
     "Part 2" {
+        part2(testInput()) shouldBe 65601038650482
         measureAnswer { part2(input()) }
     }
 }
 
-private fun part1(input: List<Long>): Long = countStones(input, blinks = 25)
-private fun part2(input: List<Long>): Long = countStones(input, blinks = 75)
+private fun part1(input: List<Long>): Long = countStonesAfterBlinks(input, totalBlinks = 25)
+private fun part2(input: List<Long>): Long = countStonesAfterBlinks(input, totalBlinks = 75)
 
-private fun countStones(stones: List<Long>, blinks: Int): Long {
-    val memory = mutableMapOf<Long, LongArray>()
-    fun memoized(stone: Long, blinksLeft: Int, block: () -> Long): Long {
-        val blinkValues = memory.getOrPut(stone) { LongArray(blinks + 1) { -1 } }
-        if (blinkValues[blinksLeft] == -1L) blinkValues[blinksLeft] = block()
-        return blinkValues[blinksLeft]
-    }
+private fun countStonesAfterBlinks(stones: List<Long>, totalBlinks: Int): Long {
+    val memory = mutableMapOf<Pair<Long, Int>, Long>()
 
-    fun count(stone: Long, blinksLeft: Int): Long = memoized(stone, blinksLeft) {
-        if (blinksLeft == 0) return@memoized 1
+    fun count(stone: Long, blinksLeft: Int): Long = memory.getOrPut(stone to blinksLeft) {
+        if (blinksLeft == 0) return 1
 
         when {
             stone == 0L -> count(1, blinksLeft - 1)
-            stone.toString().length % 2 == 0 -> {
-                val stoneValue = stone.toString()
-                val left = stoneValue.take(stoneValue.length / 2).toLong()
-                val right = stoneValue.takeLast(stoneValue.length / 2).toLong()
+            stone.countDigits() % 2 == 0 -> {
+                val (left, right) = stone.splitDigits()
                 count(left, blinksLeft - 1) + count(right, blinksLeft - 1)
             }
 
@@ -41,7 +35,17 @@ private fun countStones(stones: List<Long>, blinks: Int): Long {
         }
     }
 
-    return stones.sumOf { count(it, blinks) }
+    return stones.sumOf { count(it, totalBlinks) }
 }
 
 private fun readInput(name: String) = readText(name).splitLongs()
+
+// Utils
+
+private fun Long.countDigits() = toString().length
+
+private fun Long.splitDigits(): Pair<Long, Long> {
+    val value = toString()
+    val half = value.length / 2
+    return value.take(half).toLong() to value.takeLast(half).toLong()
+}
