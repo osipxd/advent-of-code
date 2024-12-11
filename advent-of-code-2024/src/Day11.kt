@@ -1,3 +1,5 @@
+import kotlin.math.log10
+
 private const val DAY = "Day11"
 
 fun main() {
@@ -42,10 +44,16 @@ private fun readInput(name: String) = readText(name).splitLongs()
 
 // Utils
 
-private fun Long.countDigits() = toString().length
+private val POWERS_OF_10 = mutableListOf<Int>().apply { add(1) }
+
+private fun powerOf10(n: Int): Int {
+    while (n > POWERS_OF_10.lastIndex) POWERS_OF_10.add(POWERS_OF_10.last() * 10)
+    return POWERS_OF_10[n]
+}
+
+private fun Long.countDigits() = if (this == 0L) 1 else log10(toDouble()).toInt() + 1
 
 private fun Long.splitDigits(): Pair<Long, Long> {
-    val value = toString()
-    val half = value.length / 2
-    return value.take(half).toLong() to value.takeLast(half).toLong()
+    val divisor = powerOf10(countDigits() / 2).toLong()
+    return this / divisor to this % divisor
 }
