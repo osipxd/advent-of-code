@@ -9,25 +9,23 @@ fun main() {
         measureAnswer { part1(input()) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
+    "Part 2" {
+        measureAnswer { part2(input()) }
+    }
 }
 
-private fun part1(input: List<Long>): Int = countStones(input, blinks = 25)
+private fun part1(input: List<Long>): Long = countStones(input, blinks = 25)
+private fun part2(input: List<Long>): Long = countStones(input, blinks = 75)
 
-private fun part2(input: List<Long>): Int = TODO()
-
-private fun countStones(stones: List<Long>, blinks: Int): Int {
-    val memory = mutableMapOf<Long, IntArray>()
-    fun memoized(stone: Long, blinksLeft: Int, block: () -> Int): Int {
-        val blinkValues = memory.getOrPut(stone) { IntArray(blinks + 1) { -1 } }
-        if (blinkValues[blinksLeft] == -1) blinkValues[blinksLeft] = block()
+private fun countStones(stones: List<Long>, blinks: Int): Long {
+    val memory = mutableMapOf<Long, LongArray>()
+    fun memoized(stone: Long, blinksLeft: Int, block: () -> Long): Long {
+        val blinkValues = memory.getOrPut(stone) { LongArray(blinks + 1) { -1 } }
+        if (blinkValues[blinksLeft] == -1L) blinkValues[blinksLeft] = block()
         return blinkValues[blinksLeft]
     }
 
-    fun count(stone: Long, blinksLeft: Int): Int = memoized(stone, blinksLeft) {
+    fun count(stone: Long, blinksLeft: Int): Long = memoized(stone, blinksLeft) {
         if (blinksLeft == 0) return@memoized 1
 
         when {
