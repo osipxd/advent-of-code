@@ -2,6 +2,8 @@ import lib.matrix.*
 
 private const val DAY = "Day12"
 
+private typealias GardenMap = Matrix<Char>
+
 fun main() {
     fun testInput(n: Int) = readInput("${DAY}_test$n")
     fun input() = readInput(DAY)
@@ -24,82 +26,60 @@ fun main() {
     }
 }
 
-private fun part1(input: Matrix<Char>): Int {
-    val seen = mutableSetOf<Position>()
+private fun part1(map: GardenMap): Int = calculateRegionsPrice(map, RegionContext::countSides)
+private fun part2(map: GardenMap): Int = calculateRegionsPrice(map, RegionContext::countCorners)
 
-    fun regionPrice(start: Position): Int {
-        var area = 0
-        var perimeter = 0
-        val letter = input[start]
+private fun RegionContext.countSides(position: Position): Int =
+    Direction.orthogonal.count { !isInRegion(position.nextBy(it)) }
 
-        val queue = ArrayDeque<Position>()
-        fun addNext(position: Position) {
-            if (seen.add(position)) queue += position
-        }
+/**
+ * Counts corners in a region by checking each orthogonal direction:
+ * - Outer corners: Where two adjacent sides are outside the region
+ * - Inner corners: Where two adjacent sides are inside but diagonal is outside
+ */
+private fun RegionContext.countCorners(position: Position): Int = Direction.diagonal.count { diagonalDirection ->
+    val leftPathInRegion = isInRegion(position.nextBy(diagonalDirection.turn45(clockwise = false)))
+    val rightPathInRegion = isInRegion(position.nextBy(diagonalDirection.turn45(clockwise = true)))
 
-        addNext(start)
-        while (queue.isNotEmpty()) {
-            val position = queue.removeFirst()
-            area += 1
-
-            Direction.orthogonal.asSequence()
-                .map { position.nextBy(it) }
-                .forEach { nextPosition ->
-                    if (input.getOrNull(nextPosition) == letter) {
-                        addNext(nextPosition)
-                    } else {
-                        perimeter += 1
-                    }
-                }
-        }
-
-        return area * perimeter
-    }
-
-    return input.positions().filter { it !in seen }.sumOf { regionPrice(it) }
+    // Is it an outer corner?
+    (!leftPathInRegion && !rightPathInRegion) ||
+        // Or, maybe an inner corner?
+        (leftPathInRegion && rightPathInRegion && !isInRegion(position.nextBy(diagonalDirection)))
 }
 
-private fun part2(input: Matrix<Char>): Int {
+private fun calculateRegionsPrice(map: GardenMap, countFenceSegments: RegionContext.(Position) -> Int): Int {
     val seen = mutableSetOf<Position>()
 
     fun regionPrice(start: Position): Int {
-        var area = 0
-        var sides = 0
-        val letter = input[start]
+        var regionArea = 0
+        var fenceSegments = 0
+        val context = RegionContext(map, regionLabel = map[start])
 
         val queue = ArrayDeque<Position>()
         fun addNext(position: Position) {
             if (seen.add(position)) queue += position
         }
 
-        fun isInRegion(position: Position): Boolean = input.getOrNull(position) == letter
-
-        fun countCorners(position: Position): Int {
-            return Direction.orthogonal.count { direction ->
-                val directionInRegion = isInRegion(position.nextBy(direction))
-                val nextDirectionInRegion = isInRegion(position.nextBy(direction.turn90()))
-
-                (!directionInRegion && !nextDirectionInRegion) ||
-                    (directionInRegion && nextDirectionInRegion && !isInRegion(position.nextBy(direction.turn45())))
-            }
-        }
-
         addNext(start)
         while (queue.isNotEmpty()) {
             val position = queue.removeFirst()
-            area += 1
-            sides += countCorners(position)
+            regionArea += 1
+            fenceSegments += context.countFenceSegments(position)
 
             Direction.orthogonal.asSequence()
                 .map(position::nextBy)
-                .filter(::isInRegion)
+                .filter(context::isInRegion)
                 .forEach(::addNext)
         }
 
-        return area * sides
+        return regionArea * fenceSegments
     }
 
-    return input.positions().filter { it !in seen }.sumOf { regionPrice(it) }
+    return map.positions().filter { it !in seen }.sumOf { regionPrice(it) }
+}
+
+private class RegionContext(val map: GardenMap, private val regionLabel: Char) {
+    fun isInRegion(position: Position): Boolean = map.getOrNull(position) == regionLabel
 }
 
 private fun readInput(name: String) = readMatrix(name)
