@@ -11,13 +11,17 @@ enum class Direction(override val row: Int, override val col: Int) : MatrixVecto
     LEFT(row = 0, col = -1),
     UP_LEFT(row = -1, col = -1);
 
-    fun turn90(clockwise: Boolean = true): Direction {
-        val newDirectionOrdinal = (if (clockwise) ordinal + 2 else ordinal - 2).mod(entries.size)
+    fun turn45(clockwise: Boolean = true): Direction = turn(steps = 1, clockwise)
+    fun turn90(clockwise: Boolean = true): Direction = turn(steps = 2, clockwise)
+
+    private fun turn(steps: Int, clockwise: Boolean): Direction {
+        val newDirectionOrdinal = (if (clockwise) ordinal + steps else ordinal - steps).mod(entries.size)
         return entries[newDirectionOrdinal]
     }
 
     companion object {
         val orthogonal: List<Direction> = listOf(UP, DOWN, LEFT, RIGHT)
+        val diagonal: List<Direction> = listOf(UP_RIGHT, DOWN_RIGHT, DOWN_LEFT, UP_LEFT)
     }
 }
 
