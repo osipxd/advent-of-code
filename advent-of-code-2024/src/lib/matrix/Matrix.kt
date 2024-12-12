@@ -35,7 +35,8 @@ class Matrix<T>(lines: List<List<T>>) {
         values[index(row, column)] = value
     }
 
-    fun getOrNull(row: Int, column: Int): T? = values.getOrNull(index(row, column))
+    fun getOrNull(row: Int, column: Int): T? =
+        if (row in rowIndices && column in columnIndices) get(row, column) else null
 
     private fun index(row: Int, column: Int): Int = row * columnCount + column
 }
