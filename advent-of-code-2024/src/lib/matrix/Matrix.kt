@@ -52,12 +52,20 @@ val Matrix<*>.bottomRightPosition: Position get() = Position(lastRowIndex, lastC
 
 fun <T> List<List<T>>.toMatrix(): Matrix<T> = Matrix(this)
 
+@JvmName("toMatrixChar")
+fun List<String>.toMatrix(): Matrix<Char> = this.map(String::toList).toMatrix()
+
 /** Prints matrix row by row representing each element as a char. */
 fun <T> Matrix<T>.debugPrint(transform: (position: Position, value: T) -> Char) {
     for (row in rowIndices) {
         columnIndices.joinToString(separator = "") { col -> transform(Position(row, col), this[row, col]).toString() }
             .printValue()
     }
+}
+
+@JvmName("debugPrintChar")
+fun Matrix<Char>.debugPrint(transform: (position: Position, value: Char) -> Char = { _, c -> c }) {
+    debugPrint<Char>(transform)
 }
 
 fun readMatrix(fileName: String): Matrix<Char> = readMatrix(fileName) { line -> line.map { it } }
