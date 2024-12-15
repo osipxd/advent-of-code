@@ -1,6 +1,4 @@
 
-import kotlin.math.abs
-import kotlin.math.roundToLong
 
 private const val DAY = "Day13"
 
@@ -25,13 +23,7 @@ private fun part2(input: List<ClawMachine>): Long = solve(input, targetShift = 1
 private fun solve(machines: List<ClawMachine>, targetShift: Long = 0, maxTaps: Int = -1): Long {
     return machines.sumOf { clawMachine ->
         val (a, b) = clawMachine.solve(targetShift)
-        val (roundedA, roundedB) = listOf(a, b).map { it.asLongOrNull() }
-
-        if (roundedA == null || roundedB == null || maxTaps != -1 && (roundedA > maxTaps || roundedB > maxTaps)) {
-            0
-        } else {
-            tapsCost(roundedA, roundedB)
-        }
+        if (maxTaps == -1 || a <= maxTaps && b <= maxTaps) tapsCost(a, b) else 0
     }
 }
 
@@ -66,36 +58,32 @@ private data class ClawMachine(
      *    ⎧ a * ax + b * bx = tx
      *    ⎩ a * ay + b * by = ty
      *
-     * 1. Subtract `b * bx` from the first equation and divide by `ax`
-     *    ⎧ a = tx / ax - b * bx / ax
-     *    ⎩ a * ay + b * by = ty
+     * 1. Multiply the first equation by `by` and the second one by `bx`
+     *    ⎧ a * ax * by + b * bx * by = tx * by
+     *    ⎩ a * ay * bx + b * by * bx = ty * bx
      *
-     * 2. Subtract `a * ay` from the second equation and divide by `by`
-     *    ⎧ a = tx / ax - b * bx / ax
-     *    ⎩ b = ty / by - a * ay / by
+     * 2. Subtract the second equation from the first one and find `a`:
+     *    (a * ax * by + b * bx * by) - (a * ay * bx + b * by * bx) = tx * by - ty * bx
+     *    a * ax * by - a * ay * bx = tx * by - ty * bx
+     *    a (ax * by - ay * bx) = tx * by - ty * bx
+     *    a = (tx * by - ty * bx) / (ax * by - ay * bx)
      *
-     * 3. Use the second equation in the first in place of `b`
-     *    a = tx / ax - (ty / by - a * ay / by) * bx / ax              // next: unwrap brackets
-     *    a = tx / ax - ty / by * bx / ax + a * ay / by * bx / ax      // next: move all `a`s to the left part
-     *    a - a * ay / by * bx / ax = tx / ax - ty / by * bx / ax      // next: move `a` outside of brackets
-     *    a * (1 - ay / by * bx / ax) = tx / ax - ty / by * bx / ax    // next: keep only `a` on the left side
-     *    a = (tx / ax - ty / by * bx / ax) / (1 - ay / by * bx / ax)
+     * 3. To find `b`, subtract `a * ay` from the second equation and divide it by `by`
+     *    b = (ty - a * ay) / by
+     *
+     * Considering `a` and `b` are whole numbers, we should check that there is no remainder on division.
      */
-    fun solve(targetShift: Long): Pair<Double, Double> {
-        val tx = (tx + targetShift).toDouble()
-        val ty = (ty + targetShift).toDouble()
+    fun solve(targetShift: Long): Pair<Long, Long> {
+        val tx = tx + targetShift
+        val ty = ty + targetShift
 
-        val a = (tx / ax - ty / by * bx / ax) / (1 - ay.toDouble() / by * bx / ax)
-        val b = ty / by - a * ay / by
+        val a = (tx * by - ty * bx).divideSafely(ax * by - ay * bx) ?: return 0L to 0L
+        val b = (ty - a * ay).divideSafely(by) ?: return 0L to 0L
         return a to b
     }
 }
 
 // Utils
 
-private const val EPSILON = 1e-3
-
-private fun Double.asLongOrNull(): Long? {
-    val rounded = roundToLong()
-    return if (abs(this - rounded) > EPSILON) null else rounded
-}
+private fun Long.divideSafely(divisor: Int): Long? =
+    if (divisor != 0 && this % divisor == 0L) this / divisor else null
