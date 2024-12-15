@@ -18,35 +18,15 @@ fun main() {
         fun testInput(n: Int) = readWideInput("${DAY}_test$n")
         fun input() = readWideInput(DAY)
 
-        part2(testInput(3)).printValue()
         part2(testInput(2)) shouldBe 9021
         measureAnswer { part2(input()) }
     }
 }
 
-private fun part1(input: Pair<WarehouseMap, List<Direction>>): Int {
-    val (map, movements) = input
+private fun part1(input: Pair<WarehouseMap, List<Direction>>): Int = simulateMovements(input, tileToCount = 'O')
+private fun part2(input: Pair<WarehouseMap, List<Direction>>): Int = simulateMovements(input, tileToCount = '[')
 
-    fun tryMove(position: Position, move: Direction): Position {
-        val nextPosition = position + move
-        val nextTile = map[nextPosition]
-
-        if (nextTile == '#' || nextTile == 'O' && tryMove(nextPosition, move) == nextPosition) return position
-
-        map[nextPosition] = map[position]
-        map[position] = '.'
-        return nextPosition
-    }
-
-    var position = map.valuePositions { it == '@' }.first()
-    for (move in movements) {
-        position = tryMove(position, move)
-    }
-
-    return map.valuePositions { it == 'O' }.sumOf(::gpsCoordinate)
-}
-
-private fun part2(input: Pair<WarehouseMap, List<Direction>>): Int {
+private fun simulateMovements(input: Pair<WarehouseMap, List<Direction>>, tileToCount: Char): Int {
     val (map, movements) = input
 
     fun tryMove(positions: List<Position>, move: Direction): Boolean {
@@ -56,7 +36,7 @@ private fun part2(input: Pair<WarehouseMap, List<Direction>>): Int {
         if (nextPositions.any { map[it] == '#' }) return false
 
         val nextToMove = nextPositions.filter { map[it] != '.' }
-            .flatMap { position -> getMovingPositions(map, position, move) }
+            .flatMap { position -> getMovingPositions(position, map[position], move) }
             .distinct()
 
         if (!tryMove(nextToMove, move)) return false
@@ -75,13 +55,13 @@ private fun part2(input: Pair<WarehouseMap, List<Direction>>): Int {
         }
     }
 
-    return map.valuePositions { it == '[' }.sumOf(::gpsCoordinate)
+    return map.valuePositions { it == tileToCount }.sumOf(::gpsCoordinate)
 }
 
-private fun getMovingPositions(map: WarehouseMap, position: Position, direction: Direction) = sequence {
+private fun getMovingPositions(position: Position, tile: Char, direction: Direction) = sequence {
     yield(position)
     if (direction.isVertical) {
-        when (map[position]) {
+        when (tile) {
             '[' -> yield(position.nextBy(Direction.RIGHT))
             ']' -> yield(position.nextBy(Direction.LEFT))
         }
