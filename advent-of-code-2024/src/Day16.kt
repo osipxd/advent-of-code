@@ -14,17 +14,17 @@ fun main() {
         measureAnswer(expected = 95476) { part1(input()) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
+    "Part 2" {
+        part2(testInput(1)) shouldBe 45
+        part2(testInput(2)) shouldBe 64
+        measureAnswer { part2(input()) }
+    }
 }
 
-private fun part1(maze: ReindeerMaze): Int = findBestPath(maze).getValue(maze.finalKey)
+private fun part1(maze: ReindeerMaze): Int = findBestPath(maze).first
+private fun part2(maze: ReindeerMaze): Int = findBestPath(maze).second
 
-private fun part2(maze: ReindeerMaze): Int = TODO()
-
-private fun findBestPath(maze: ReindeerMaze): Map<ReindeerState.Key, Int> {
+private fun findBestPath(maze: ReindeerMaze): Pair<Int, Int> {
     val bestSeenPoints = mutableMapOf<ReindeerState.Key, Int>()
     fun updateBestSeenPoints(key: ReindeerState.Key, points: Int): Boolean {
         return (key !in bestSeenPoints || bestSeenPoints.getValue(key) >= points)
@@ -40,6 +40,19 @@ private fun findBestPath(maze: ReindeerMaze): Map<ReindeerState.Key, Int> {
     val finalKey = maze.finalKey
     val end = finalKey.position
 
+    var visitedTiles = emptySet<Position>()
+    fun onFinalState(state: ReindeerState) {
+        when {
+            finalKey !in bestSeenPoints || bestSeenPoints.getValue(finalKey) > state.points -> {
+                bestSeenPoints[finalKey] = state.points
+                visitedTiles = state.visited
+            }
+            bestSeenPoints.getValue(finalKey) == state.points -> {
+                visitedTiles = visitedTiles + state.visited
+            }
+        }
+    }
+
     val startState = ReindeerState(maze.start, Direction.RIGHT)
     tryAddNext(startState)
     tryAddNext(startState.turn(clockwise = false))
@@ -54,7 +67,7 @@ private fun findBestPath(maze: ReindeerMaze): Map<ReindeerState.Key, Int> {
         }
         val nextState = state.move(stepsForward)
         if (nextState.position == end) {
-            updateBestSeenPoints(finalKey, nextState.points)
+            onFinalState(nextState)
         } else {
             tryAddNext(nextState)
             tryAddNext(nextState.turn(clockwise = true))
@@ -62,7 +75,7 @@ private fun findBestPath(maze: ReindeerMaze): Map<ReindeerState.Key, Int> {
         }
     }
 
-    return bestSeenPoints
+    return bestSeenPoints.getValue(finalKey) to visitedTiles.size
 }
 
 private fun ReindeerMaze.canTurn(position: Position, direction: Direction): Boolean {
@@ -82,8 +95,13 @@ private data class ReindeerState(
     val position: Position,
     val direction: Direction,
     val points: Int = 0,
+    val visited: Set<Position> = setOf(position),
 ) {
-    fun move(steps: Int) = copy(position = position + (direction * steps), points = points + steps)
+    fun move(steps: Int) = copy(
+        position = position + (direction * steps),
+        points = points + steps,
+        visited = visited + position.walk(direction).drop(1).take(steps),
+    )
     fun turn(clockwise: Boolean) = copy(direction = direction.turn90(clockwise), points = points + TURN_POINTS)
 
     fun key() = Key(position, direction)
