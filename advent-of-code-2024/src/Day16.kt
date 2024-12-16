@@ -1,4 +1,3 @@
-
 import lib.matrix.*
 
 private const val DAY = "Day16"
@@ -12,7 +11,7 @@ fun main() {
     "Part 1" {
         part1(testInput(1)) shouldBe 7036
         part1(testInput(2)) shouldBe 11048
-        measureAnswer { part1(input()) }
+        measureAnswer(expected = 95476) { part1(input()) }
     }
 
     //"Part 2" {
@@ -21,48 +20,49 @@ fun main() {
     //}
 }
 
-private fun part1(maze: ReindeerMaze): Int {
-    val start = Position(row = maze.lastRowIndex - 1, column = 1)
-    val end = Position(row = 1, column = maze.lastColumnIndex - 1)
-    val finalKey = ReindeerState.Key(end, Direction.RIGHT) // Hardcode direction for the final state
+private fun part1(maze: ReindeerMaze): Int = findBestPath(maze).getValue(maze.finalKey)
 
+private fun part2(maze: ReindeerMaze): Int = TODO()
+
+private fun findBestPath(maze: ReindeerMaze): Map<ReindeerState.Key, Int> {
     val bestSeenPoints = mutableMapOf<ReindeerState.Key, Int>()
     fun updateBestSeenPoints(key: ReindeerState.Key, points: Int): Boolean {
-        return if (key !in bestSeenPoints || bestSeenPoints.getValue(key) >= points) {
-            bestSeenPoints[key] = points
-            true
-        } else {
-            false
-        }
+        return (key !in bestSeenPoints || bestSeenPoints.getValue(key) >= points)
+            .also { if (it) bestSeenPoints[key] = points }
     }
 
     val queue = ArrayDeque<ReindeerState>()
-
-    fun addNext(position: Position, direction: Direction, points: Int) {
-        val state = ReindeerState(position, direction, points)
-        if (updateBestSeenPoints(state.key(), points)) queue.addLast(state)
+    fun tryAddNext(state: ReindeerState) {
+        val isDeadEnd = maze[state.position.nextBy(state.direction)] == '#'
+        if (!isDeadEnd && updateBestSeenPoints(state.key(), state.points)) queue.addLast(state)
     }
 
-    addNext(start, Direction.RIGHT, points = 0)
-    addNext(start, Direction.UP, points = TURN_POINTS)
+    val finalKey = maze.finalKey
+    val end = finalKey.position
+
+    val startState = ReindeerState(maze.start, Direction.RIGHT)
+    tryAddNext(startState)
+    tryAddNext(startState.turn(clockwise = false))
     while (queue.isNotEmpty()) {
-        val (position, direction, points) = queue.removeFirst()
+        val state = queue.removeFirst()
+        if (bestSeenPoints.getValue(state.key()) < state.points) continue
+        val (position, direction) = state
 
         // Walk until a crossroad or a wall
         val stepsForward = position.walk(direction).indexOfFirst {
             maze[it.nextBy(direction)] == '#' || it != position && maze.canTurn(it, direction)
         }
-        val nextPosition = position.moveBy(direction, steps = stepsForward)
-        if (nextPosition == end) {
-            updateBestSeenPoints(finalKey, points + stepsForward)
+        val nextState = state.move(stepsForward)
+        if (nextState.position == end) {
+            updateBestSeenPoints(finalKey, nextState.points)
         } else {
-            if (maze[nextPosition.nextBy(direction)] == '.') addNext(nextPosition, direction, points + stepsForward)
-            if (maze[nextPosition.nextBy(direction.turn90(clockwise = true))] == '.') addNext(nextPosition, direction.turn90(clockwise = true), points + stepsForward + TURN_POINTS)
-            if (maze[nextPosition.nextBy(direction.turn90(clockwise = false))] == '.') addNext(nextPosition, direction.turn90(clockwise = false), points + stepsForward + TURN_POINTS)
+            tryAddNext(nextState)
+            tryAddNext(nextState.turn(clockwise = true))
+            tryAddNext(nextState.turn(clockwise = false))
         }
     }
 
-    return bestSeenPoints.getValue(finalKey)
+    return bestSeenPoints
 }
 
 private fun ReindeerMaze.canTurn(position: Position, direction: Direction): Boolean {
@@ -70,15 +70,21 @@ private fun ReindeerMaze.canTurn(position: Position, direction: Direction): Bool
         this[position.nextBy(direction.turn90(clockwise = false))] != '#'
 }
 
-private fun part2(maze: ReindeerMaze): Int = TODO()
+private val ReindeerMaze.start: Position get() = Position(row = lastRowIndex - 1, column = 1)
+private val ReindeerMaze.end: Position get() = Position(row = 1, column = lastColumnIndex - 1)
+
+// Hardcode direction for the final state
+private val ReindeerMaze.finalKey: ReindeerState.Key get() = ReindeerState.Key(end, Direction.RIGHT)
 
 private const val TURN_POINTS = 1000
 
 private data class ReindeerState(
     val position: Position,
     val direction: Direction,
-    val points: Int,
+    val points: Int = 0,
 ) {
+    fun move(steps: Int) = copy(position = position + (direction * steps), points = points + steps)
+    fun turn(clockwise: Boolean) = copy(direction = direction.turn90(clockwise), points = points + TURN_POINTS)
 
     fun key() = Key(position, direction)
 

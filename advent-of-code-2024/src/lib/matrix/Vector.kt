@@ -18,6 +18,8 @@ private data class MatrixVectorImpl(override val row: Int, override val col: Int
 
 operator fun MatrixVector.unaryMinus(): MatrixVector = MatrixVector(-row, -col)
 
+operator fun MatrixVector.times(times: Int) = MatrixVector(row * times, col * times)
+
 operator fun Position.plus(vector: MatrixVector): Position = offsetBy(vector.row, vector.col)
 operator fun Position.minus(vector: MatrixVector): Position = offsetBy(-vector.row, -vector.col)
 

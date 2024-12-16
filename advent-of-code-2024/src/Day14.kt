@@ -75,5 +75,3 @@ private fun readInput(name: String) = readLines(name) { line ->
 private fun String.extractNumbers() = substringAfter("=").splitInts()
 
 private infix fun Int.x(other: Int): BathroomSize = this to other
-
-private operator fun MatrixVector.times(times: Int) = MatrixVector(row * times, col * times)
