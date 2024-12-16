@@ -27,3 +27,5 @@ enum class Direction(override val row: Int, override val col: Int) : MatrixVecto
 
 /** An alias for movement in the specified [direction] as operator 'plus' might not be convenient to use. */
 fun Position.nextBy(direction: Direction) = offsetBy(direction.row, direction.col)
+
+fun Position.moveBy(direction: Direction, steps: Int) = offsetBy(direction.row * steps, direction.col * steps)
