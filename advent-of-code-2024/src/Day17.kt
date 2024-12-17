@@ -19,15 +19,15 @@ private fun part1(computer: Computer): String = computer.runProgram().joinToStri
 
 private fun part2(computer: Computer): Long {
     val states = ArrayDeque<Pair<Long, Int>>()
-    fun addStateRange(range: LongRange, elementsCount: Int) = states.addAll(range.map { it to elementsCount })
+    fun addStateRange(range: LongRange, index: Int) = states.addAll(range.map { it to index })
 
-    addStateRange(1..7L, elementsCount = 1)
+    addStateRange(1..7L, index = computer.program.lastIndex)
     while (states.isNotEmpty()) {
-        val (registerA, elementsCount) = states.removeFirst()
-        val output = computer.runProgram(registerA)
-        if (output.size == elementsCount && output == computer.program.takeLast(elementsCount)) {
-            if (output.size == computer.program.size) return registerA
-            else addStateRange((registerA * 8)..<((registerA + 1) * 8 - 1), elementsCount + 1)
+        val (registerA, index) = states.removeFirst()
+        val result = computer.runProgram(registerA, ignoreLoop = true).single()
+        if (result == computer.program[index]) {
+            if (index == 0) return registerA
+            else addStateRange((registerA * 8)..<((registerA + 1) * 8), index - 1)
         }
     }
 
@@ -44,7 +44,7 @@ private class Computer(val registers: LongArray, val program: List<Int>) {
         else -> error("Invalid combo operand: $operand")
     }
 
-    fun runProgram(registerA: Long = registers[A]): List<Int> {
+    fun runProgram(registerA: Long = registers[A], ignoreLoop: Boolean = false): List<Int> {
         reset()
         registers[A] = registerA
         while (instructionPointer in program.indices) {
@@ -52,6 +52,7 @@ private class Computer(val registers: LongArray, val program: List<Int>) {
             val instruction = Instruction.byOpcode(program[instructionPointer])
             with(instruction) { execute(program[instructionPointer + 1]) }
             if (pointerBefore == instructionPointer) instructionPointer += 2
+            else if (ignoreLoop) break
         }
         return out.toList()
     }
