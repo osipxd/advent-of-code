@@ -1,3 +1,4 @@
+import lib.binarySearch
 import lib.matrix.*
 
 private const val DAY = "Day18"
@@ -11,16 +12,27 @@ fun main() {
         measureAnswer { part1(input().take(1024), gridSize = 71) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
+    "Part 2" {
+        part2(testInput(), gridSize = 7) shouldBe "6,1"
+        measureAnswer { part2(input(), gridSize = 71) }
+    }
 }
 
-private fun part1(bytes: List<Position>, gridSize: Int): Int {
-    val byteSet = bytes.toSet()
-    val bounds = Bounds(gridSize)
+private fun part1(bytes: List<Position>, gridSize: Int): Int = findPath(bytes, Bounds(gridSize))
 
+private fun part2(bytes: List<Position>, gridSize: Int): String {
+    val bounds = Bounds(gridSize)
+    val badByteIndex = bytes.indices.binarySearch { index ->
+        val pathLength = findPath(bytes.take(index + 1), bounds)
+        if (pathLength == -1) 1 else -1
+    }.insertionIndex
+
+    val badByte = bytes[badByteIndex]
+    return "${badByte.column},${badByte.row}"
+}
+
+private fun findPath(bytes: List<Position>, bounds: Bounds): Int {
+    val byteSet = bytes.toSet()
     val start = bounds.topLeftPosition
     val end = bounds.bottomRightPosition
 
@@ -40,10 +52,8 @@ private fun part1(bytes: List<Position>, gridSize: Int): Int {
         Direction.orthogonal.forEach { tryAddNext(position.nextBy(it), distance + 1) }
     }
 
-    error("No path found")
+    return -1
 }
-
-private fun part2(bytes: List<Position>): Int = TODO()
 
 private fun readInput(name: String) = readLines(name) {
     val (x, y) = it.splitInts().takePair()
