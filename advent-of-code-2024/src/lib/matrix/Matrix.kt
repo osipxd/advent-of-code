@@ -47,9 +47,6 @@ fun Matrix<*>.positions(): Sequence<Position> =
 fun <T> Matrix<T>.valuePositions(predicate: (T) -> Boolean): Sequence<Position> =
     positions().filter { predicate(this[it]) }
 
-val Matrix<*>.topLeftPosition: Position get() = Position.Zero
-val Matrix<*>.bottomRightPosition: Position get() = Position(lastRowIndex, lastColumnIndex)
-
 fun <T> List<List<T>>.toMatrix(): Matrix<T> = Matrix(this)
 
 @JvmName("toMatrixChar")
