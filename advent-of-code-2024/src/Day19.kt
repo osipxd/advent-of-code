@@ -11,10 +11,10 @@ fun main() {
         measureAnswer { part1(input()) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
+    "Part 2" {
+        part2(testInput()) shouldBe 16
+        measureAnswer { part2(input()) }
+    }
 }
 
 private fun part1(input: PairOf<List<String>>): Int {
@@ -28,7 +28,20 @@ private fun part1(input: PairOf<List<String>>): Int {
     return patterns.count(::isPossibleDesign)
 }
 
-private fun part2(input: PairOf<List<String>>): Int = TODO()
+private fun part2(input: PairOf<List<String>>): Long {
+    val (towels, patterns) = input
+
+    val memory = mutableMapOf<String, Long>()
+    fun countPossibleArrangements(pattern: String): Long = memory.getOrPut(pattern) {
+        if (pattern.isEmpty()) return 1L
+        towels.sumOf { towel ->
+            if (pattern.startsWith(towel)) countPossibleArrangements(pattern.removePrefix(towel))
+            else 0L
+        }
+    }
+
+    return patterns.sumOf(::countPossibleArrangements)
+}
 
 private fun readInput(name: String): PairOf<List<String>> {
     val (rawTowels, rawPatterns) = readText(name).split("\n\n")
