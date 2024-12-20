@@ -14,20 +14,21 @@ fun main() {
         measureAnswer { part1(input(), minimalCheatBonus = 100) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
-}
-
-private fun part1(map: Racetrack, minimalCheatBonus: Int = 0): Int {
-    val path = runFairly(map)
-    return path.keys.sumOf { position ->
-        map.calculateCheatBonuses(path, position).count { it >= minimalCheatBonus }
+    "Part 2" {
+        part2(testInput()) shouldBe 3081
+        measureAnswer { part2(input(), minimalCheatBonus = 100) }
     }
 }
 
-private fun part2(map: Racetrack): Int = TODO()
+private fun part1(map: Racetrack, minimalCheatBonus: Int = 0): Int = solve(map, minimalCheatBonus, maxCheatSteps = 2)
+private fun part2(map: Racetrack, minimalCheatBonus: Int = 0): Int = solve(map, minimalCheatBonus, maxCheatSteps = 20)
+
+private fun solve(map: Racetrack, minimalCheatBonus: Int, maxCheatSteps: Int): Int {
+    val path = runFairly(map)
+    return path.keys.sumOf { position ->
+        map.findCheats(path, position, maxCheatSteps).count { it >= minimalCheatBonus }
+    }
+}
 
 private fun runFairly(map: Racetrack): FairPath {
     val start = map.valuePositions { it == 'S' }.first()
@@ -47,22 +48,31 @@ private fun runFairly(map: Racetrack): FairPath {
     return path
 }
 
-private fun Racetrack.calculateCheatBonuses(path: FairPath, position: Position, steps: Int = 2): Sequence<Int> {
-    return position.neighbors { get(it) == '#' }
-        .map { wallPosition ->
-            val vector = (position to wallPosition)
-            position + vector * steps
+private fun Racetrack.findCheats(path: FairPath, startPosition: Position, maxSteps: Int): Sequence<Int> = sequence {
+    val seen = mutableSetOf<Position>()
+    val queue = ArrayDeque<Pair<Position, Int>>()
+
+    fun addNext(position: Position, steps: Int) {
+        if (position in bounds && seen.add(position)) queue.addLast(position to steps)
+    }
+
+    addNext(startPosition, steps = 0)
+    while (queue.isNotEmpty()) {
+        val (position, steps) = queue.removeFirst()
+        if (position in path) {
+            val cheatBonus = path.getValue(position) - path.getValue(startPosition) - steps
+            if (cheatBonus > 0) yield(cheatBonus)
         }
-        .filter { it in path }
-        .map { positionAfterCheat -> path.getValue(positionAfterCheat) - path.getValue(position) - steps }
+
+        if (steps < maxSteps) {
+            position.neighbors().forEach { addNext(it, steps = steps + 1) }
+        }
+    }
 }
 
 private fun readInput(name: String): Racetrack = readMatrix(name)
 
 // Utils
 
-private fun Position.neighbors(condition: (Position) -> Boolean) =
+private fun Position.neighbors(condition: (Position) -> Boolean = { true }) =
     Direction.orthogonal.asSequence().map(::nextBy).filter(condition)
-
-private infix fun Position.to(other: Position): MatrixVector =
-    MatrixVector(other.row - this.row, other.column - this.column)
