@@ -1,7 +1,7 @@
 import lib.matrix.Position
 import lib.matrix.get
+import lib.matrix.positions
 import lib.matrix.toMatrix
-import lib.matrix.valuePositions
 
 private const val DAY = "Day21"
 
@@ -17,6 +17,7 @@ fun main() {
     }
 
     "Part 2" {
+        part2(testInput()) shouldBe 154115708116294
         measureAnswer { part2(input()) }
     }
 }
@@ -24,27 +25,32 @@ fun main() {
 private fun part1(codes: List<String>): Long = solve(codes, directionalKeypads = 2)
 private fun part2(codes: List<String>): Long = solve(codes, directionalKeypads = 25)
 
-private fun solve(codes: List<String>, directionalKeypads: Int): Long {
-    return codes.sumOf { code ->
-        val buttonTaps = countButtonTaps(code, directionalKeypads)
-        buttonTaps * code.dropLast(1).toInt()
-    }
-}
+private fun solve(codes: List<String>, directionalKeypads: Int): Long =
+    codes.sumOf { code -> codeComplexity(code, directionalKeypads) }
 
-private fun countButtonTaps(code: String, directionalKeypads: Int): Long {
+private fun codeComplexity(code: String, directionalKeypads: Int): Long {
     val memory = mutableMapOf<Pair<String, Int>, Long>()
-    fun countFragment(fragment: String, keypadsLeft: Int): Long = memory.getOrPut(fragment to keypadsLeft) {
+    fun fragmentComplexity(fragment: String, keypadsLeft: Int): Long = memory.getOrPut(fragment to keypadsLeft) {
         if (keypadsLeft == 0) return fragment.length.toLong()
 
-        val fragmentMoves = enterCode(directionalKeypad, fragment)
-        codeFragments(fragmentMoves).sumOf { countFragment(it, keypadsLeft - 1) }
+        val moves = enterCode(directionalKeypad, fragment)
+        codeFragments(moves).sumOf { fragmentComplexity(it, keypadsLeft - 1) }
     }
 
     val moves = enterCode(numericKeypad, code)
-    return codeFragments(moves).sumOf { countFragment(it, directionalKeypads) }
+    val buttonTaps = codeFragments(moves).sumOf { fragmentComplexity(it, directionalKeypads) }
+    return buttonTaps * code.dropLast(1).toInt()
 }
 
-private fun codeFragments(code: String) = code.split("A").dropLast(1).map { "${it}A" }
+private fun codeFragments(code: String) = sequence {
+    var start = -1
+    for (i in code.indices) {
+        if (code[i] == 'A') {
+            yield(code.substring(start + 1..i))
+            start = i
+        }
+    }
+}
 
 private fun enterCode(keypad: Keypad, code: String): String = buildString {
     var position = keypad.getValue('A')
@@ -64,9 +70,10 @@ private fun enterCode(keypad: Keypad, code: String): String = buildString {
         if (nextPosition != position) {
             val rowDiff = nextPosition.row - position.row
             val columnDiff = nextPosition.column - position.column
-            val horizontallyFirst = Position(nextPosition.row, position.column) !in keypad.values ||
-                Position(position.row, nextPosition.column) in keypad.values && columnDiff < 0
-            if (horizontallyFirst) {
+            val canStartHorizontally = Position(position.row, nextPosition.column) != keypad[' ']
+            val canStartVertically = Position(nextPosition.row, position.column) != keypad[' ']
+
+            if (!canStartVertically || canStartHorizontally && columnDiff < 0) {
                 moveHorizontally(columnDiff)
                 moveVertically(rowDiff)
             } else {
@@ -93,7 +100,7 @@ private val directionalKeypad = keypadMapping(
 
 private fun keypadMapping(vararg lines: String): Keypad {
     val matrix = lines.toList().toMatrix()
-    return matrix.valuePositions { it != ' ' }.associateBy(matrix::get)
+    return matrix.positions().associateBy(matrix::get)
 }
 
 private fun readInput(name: String) = readLines(name)
