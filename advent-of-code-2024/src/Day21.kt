@@ -16,23 +16,35 @@ fun main() {
         measureAnswer { part1(input()) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
-}
-
-private fun part1(codes: List<String>): Int {
-    return codes.sumOf { code ->
-        val movesCount = enterCode(numericKeypad, code)
-            .let { enterCode(directionalKeypad, it) }
-            .let { enterCode(directionalKeypad, it) }
-            .length
-        movesCount * code.dropLast(1).toInt()
+    "Part 2" {
+        measureAnswer { part2(input()) }
     }
 }
 
-private fun part2(codes: List<String>): Int = TODO()
+private fun part1(codes: List<String>): Long = solve(codes, directionalKeypads = 2)
+private fun part2(codes: List<String>): Long = solve(codes, directionalKeypads = 25)
+
+private fun solve(codes: List<String>, directionalKeypads: Int): Long {
+    return codes.sumOf { code ->
+        val buttonTaps = countButtonTaps(code, directionalKeypads)
+        buttonTaps * code.dropLast(1).toInt()
+    }
+}
+
+private fun countButtonTaps(code: String, directionalKeypads: Int): Long {
+    val memory = mutableMapOf<Pair<String, Int>, Long>()
+    fun countFragment(fragment: String, keypadsLeft: Int): Long = memory.getOrPut(fragment to keypadsLeft) {
+        if (keypadsLeft == 0) return fragment.length.toLong()
+
+        val fragmentMoves = enterCode(directionalKeypad, fragment)
+        codeFragments(fragmentMoves).sumOf { countFragment(it, keypadsLeft - 1) }
+    }
+
+    val moves = enterCode(numericKeypad, code)
+    return codeFragments(moves).sumOf { countFragment(it, directionalKeypads) }
+}
+
+private fun codeFragments(code: String) = code.split("A").dropLast(1).map { "${it}A" }
 
 private fun enterCode(keypad: Keypad, code: String): String = buildString {
     var position = keypad.getValue('A')
@@ -52,7 +64,9 @@ private fun enterCode(keypad: Keypad, code: String): String = buildString {
         if (nextPosition != position) {
             val rowDiff = nextPosition.row - position.row
             val columnDiff = nextPosition.column - position.column
-            if (columnDiff < 0 && Position(position.row, nextPosition.column) in keypad.values) {
+            val horizontallyFirst = Position(nextPosition.row, position.column) !in keypad.values ||
+                Position(position.row, nextPosition.column) in keypad.values && columnDiff < 0
+            if (horizontallyFirst) {
                 moveHorizontally(columnDiff)
                 moveVertically(rowDiff)
             } else {
