@@ -48,11 +48,18 @@ private fun part2(connections: List<PairOf<String>>): String {
         connectionTable.getOrPut(secondHost) { mutableSetOf() } += firstHost
     }
 
-    val clusters = connectionTable.mapValues { (host, _) -> connectionTable.findCluster(host) }
-    return clusters.maxBy { (_, cluster) -> cluster.size }.value.sorted().joinToString(",")
+    val biggestCluster = connectionTable.keys.fold(emptySet<String>()) { cluster, host ->
+        connectionTable.findBiggestCluster(host, cluster)
+    }
+    return biggestCluster.sorted().joinToString(",")
 }
 
-private fun ConnectionTable.findCluster(startHost: String): Set<String> {
+private fun ConnectionTable.findBiggestCluster(
+    startHost: String,
+    currentBiggestCluster: Set<String>,
+): Set<String> {
+    if (startHost in currentBiggestCluster) return currentBiggestCluster
+
     data class State(
         val cluster: Set<String> = emptySet(),
         val checked: Set<String> = emptySet(),
@@ -72,10 +79,10 @@ private fun ConnectionTable.findCluster(startHost: String): Set<String> {
 
     val seen = mutableSetOf<State>()
     val queue = ArrayDeque<State>()
-    var biggestCluster = emptySet<String>()
+    var biggestCluster = currentBiggestCluster
 
     fun addNext(state: State) {
-        if (seen.add(state)) queue.addLast(state)
+        if (state.cluster.size > biggestCluster.size && seen.add(state)) queue.addLast(state)
     }
 
     addNext(State(startHost))
