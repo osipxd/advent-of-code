@@ -2,6 +2,8 @@ import lib.PairOf
 
 private const val DAY = "Day23"
 
+private typealias ConnectionTable = Map<String, Set<String>>
+
 fun main() {
     fun testInput() = readInput("${DAY}_test")
     fun input() = readInput(DAY)
@@ -11,10 +13,10 @@ fun main() {
         measureAnswer { part1(input()) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
+    "Part 2" {
+        part2(testInput()) shouldBe "co,de,ka,ta"
+        measureAnswer { part2(input()) }
+    }
 }
 
 private fun part1(connections: List<PairOf<String>>): Int {
@@ -38,6 +40,57 @@ private fun part1(connections: List<PairOf<String>>): Int {
 
 private fun String.isPossibleTarget() = startsWith("t")
 
-private fun part2(connections: List<PairOf<String>>): Int = TODO()
+private fun part2(connections: List<PairOf<String>>): String {
+    val connectionTable = mutableMapOf<String, MutableSet<String>>()
+
+    for ((firstHost, secondHost) in connections) {
+        connectionTable.getOrPut(firstHost) { mutableSetOf() } += secondHost
+        connectionTable.getOrPut(secondHost) { mutableSetOf() } += firstHost
+    }
+
+    val clusters = connectionTable.mapValues { (host, _) -> connectionTable.findCluster(host) }
+    return clusters.maxBy { (_, cluster) -> cluster.size }.value.sorted().joinToString(",")
+}
+
+private fun ConnectionTable.findCluster(startHost: String): Set<String> {
+    data class State(
+        val cluster: Set<String> = emptySet(),
+        val checked: Set<String> = emptySet(),
+    ) {
+        constructor(host: String) : this(
+            cluster = getValue(host) + host,
+            checked = setOf(host),
+        )
+
+        val hostsToCheck: Set<String> = cluster - checked
+
+        fun includeHost(host: String): State {
+            val hostConnections = getValue(host)
+            return State(cluster intersect (hostConnections + host), checked + host)
+        }
+    }
+
+    val seen = mutableSetOf<State>()
+    val queue = ArrayDeque<State>()
+    var biggestCluster = emptySet<String>()
+
+    fun addNext(state: State) {
+        if (seen.add(state)) queue.addLast(state)
+    }
+
+    addNext(State(startHost))
+    while (queue.isNotEmpty()) {
+        val state = queue.removeFirst()
+        val hostsToCheck = state.hostsToCheck
+
+        if (hostsToCheck.isEmpty()) {
+            if (state.cluster.size > biggestCluster.size) biggestCluster = state.cluster
+        } else {
+            for (host in hostsToCheck) addNext(state.includeHost(host))
+        }
+    }
+
+    return biggestCluster
+}
 
 private fun readInput(name: String) = readLines(name).map { it.split("-").takePair() }
