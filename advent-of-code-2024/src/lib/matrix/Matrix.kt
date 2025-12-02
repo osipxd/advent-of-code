@@ -7,19 +7,27 @@ import readLines
  * 2-dimensional matrix.
  * Assumes that the given [lines] are all equal by length.
  */
-class Matrix<T>(lines: List<List<T>>) {
+class Matrix<T>(
+    val rowCount: Int,
+    val columnCount: Int,
+    value: (row: Int, column: Int) -> T,
+): Iterable<T> {
 
-    val rowCount: Int = lines.size
     val lastRowIndex: Int = rowCount - 1
     val rowIndices: IntRange = 0..lastRowIndex
 
-    val columnCount: Int = lines.first().size
     val lastColumnIndex: Int = columnCount - 1
     val columnIndices: IntRange = 0..lastColumnIndex
 
     private val values: MutableList<T> = MutableList(rowCount * columnCount) { i ->
-        lines[i / columnCount][i % columnCount]
+        value(i / columnCount, i % columnCount)
     }
+
+    constructor(lines: List<List<T>>) : this(
+        rowCount = lines.size,
+        columnCount = lines.first().size,
+        value = { row, column -> lines[row][column] }
+    )
 
     fun rows(): List<List<T>> = values.chunked(columnCount)
 
@@ -39,6 +47,8 @@ class Matrix<T>(lines: List<List<T>>) {
         if (row in rowIndices && column in columnIndices) get(row, column) else null
 
     private fun index(row: Int, column: Int): Int = row * columnCount + column
+
+    override fun iterator(): Iterator<T> = values.iterator()
 }
 
 fun Matrix<*>.positions(): Sequence<Position> =

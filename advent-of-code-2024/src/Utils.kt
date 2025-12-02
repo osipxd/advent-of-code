@@ -19,7 +19,7 @@ fun String.splitLongs(vararg delimiters: String = arrayOf(" ", ",", ", ")): List
 /** Takes two elements from [this] list and creates [Pair] of it. */
 fun <T> List<T>.takePair(): Pair<T, T> = get(0) to get(1)
 
-fun <T> Pair<T, T>.map(transform: (T) -> T): Pair<T, T> = transform(first) to transform(second)
+fun <T, R> Pair<T, T>.map(transform: (T) -> R): Pair<R, R> = transform(first) to transform(second)
 
 /** More convenient way to print test values. */
 fun <T> T.printValue(): T = also(::println)
