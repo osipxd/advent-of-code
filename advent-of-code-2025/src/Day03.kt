@@ -23,15 +23,17 @@ value class BatteryBank(val batteries: List<Int>) {
 
     fun calculateJoltage(count: Int): Long {
         val pickedBatteries = IntArray(count) { it }
-        val lastPickedIndex = pickedBatteries.lastIndex
+        val maxPickedIndex = pickedBatteries.lastIndex
 
         fun pickBatteries(replaceIndex: Int, batteryIndex: Int) {
-            for (i in 0..lastPickedIndex - replaceIndex) pickedBatteries[replaceIndex + i] = batteryIndex + i
+            for (i in 0..maxPickedIndex - replaceIndex) pickedBatteries[replaceIndex + i] = batteryIndex + i
         }
 
         for ((index, battery) in batteries.withIndex().drop(1)) {
             val spaceLeft = batteries.lastIndex - index
-            for (replaceIndex in (lastPickedIndex - spaceLeft).coerceAtLeast(0)..index.coerceAtMost(lastPickedIndex)) {
+            val replaceStart = (maxPickedIndex - spaceLeft).coerceAtLeast(0)
+            val replaceEnd = index.coerceAtMost(maxPickedIndex)
+            for (replaceIndex in replaceStart..replaceEnd) {
                 if (index > pickedBatteries[replaceIndex] && battery > batteries[pickedBatteries[replaceIndex]]) {
                     pickBatteries(replaceIndex, index)
                     break
