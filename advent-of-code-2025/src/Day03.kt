@@ -9,35 +9,38 @@ fun main() {
         measureAnswer { part1(input()) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
-}
-
-private fun part1(input: List<BatteryBank>): Int = input.sumOf(BatteryBank::calculateJoltage)
-
-private fun part2(input: List<BatteryBank>): Int = TODO()
-
-@JvmInline
-value class BatteryBank(val batteries: IntArray) {
-
-    fun calculateJoltage(): Int {
-        var firstBattery = batteries[0]
-        var secondBattery = batteries[1]
-
-        for ((index, battery) in batteries.withIndex().drop(2)) {
-            if (battery > secondBattery) secondBattery = battery
-            if (battery > firstBattery && index < batteries.lastIndex) {
-                firstBattery = battery
-                secondBattery = 0
-            }
-        }
-
-        return firstBattery * 10 + secondBattery
+    "Part 2" {
+        part2(testInput()) shouldBe 3121910778619
+        measureAnswer { part2(input()) }
     }
 }
 
-private fun readInput(name: String) = readLines(name) { line ->
-    BatteryBank(line.map { it.digitToInt() }.toIntArray())
+private fun part1(input: List<BatteryBank>): Long = input.sumOf { it.calculateJoltage(count = 2) }
+private fun part2(input: List<BatteryBank>): Long = input.sumOf { it.calculateJoltage(count = 12) }
+
+@JvmInline
+value class BatteryBank(val batteries: List<Int>) {
+
+    fun calculateJoltage(count: Int): Long {
+        val pickedBatteries = IntArray(count) { it }
+        val lastPickedIndex = pickedBatteries.lastIndex
+
+        fun pickBatteries(replaceIndex: Int, batteryIndex: Int) {
+            for (i in 0..lastPickedIndex - replaceIndex) pickedBatteries[replaceIndex + i] = batteryIndex + i
+        }
+
+        for ((index, battery) in batteries.withIndex().drop(1)) {
+            val spaceLeft = batteries.lastIndex - index
+            for (replaceIndex in (lastPickedIndex - spaceLeft).coerceAtLeast(0)..index.coerceAtMost(lastPickedIndex)) {
+                if (index > pickedBatteries[replaceIndex] && battery > batteries[pickedBatteries[replaceIndex]]) {
+                    pickBatteries(replaceIndex, index)
+                    break
+                }
+            }
+        }
+
+        return pickedBatteries.fold(0L) { acc, pickedBattery -> acc * 10 + batteries[pickedBattery] }
+    }
 }
+
+private fun readInput(name: String) = readLines(name) { line -> BatteryBank(line.map(Char::digitToInt)) }
