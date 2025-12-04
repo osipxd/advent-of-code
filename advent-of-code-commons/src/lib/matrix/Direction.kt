@@ -29,3 +29,8 @@ enum class Direction(override val row: Int, override val col: Int) : MatrixVecto
 fun Position.nextBy(direction: Direction) = offsetBy(direction.row, direction.col)
 
 fun Position.moveBy(direction: Direction, steps: Int) = offsetBy(direction.row * steps, direction.col * steps)
+
+fun Position.neighbors(
+    directions: List<Direction> = Direction.entries,
+    condition: (Position) -> Boolean = { true }
+): Sequence<Position> = directions.asSequence().map(::nextBy).filter(condition)

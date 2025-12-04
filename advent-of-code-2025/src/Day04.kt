@@ -29,8 +29,3 @@ private fun Matrix<Char>.canBeAccessed(position: Position) =
     position.neighbors { getOrNull(it) != PAPER_ROLL }.count() > 4
 
 private fun readInput(name: String) = readMatrix(name)
-
-// Utils
-
-private fun Position.neighbors(condition: (Position) -> Boolean = { true }) =
-    Direction.entries.asSequence().map(::nextBy).filter(condition)

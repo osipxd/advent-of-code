@@ -41,7 +41,7 @@ private fun runFairly(map: Racetrack): FairPath {
     addNext(start, steps = 0)
     while (map[path.lastEntry().key] != 'E') {
         val (position, steps) = path.lastEntry()
-        val nextPosition = position.neighbors { it !in path && map[it] != '#' }.single()
+        val nextPosition = position.orthogonalNeighbors { it !in path && map[it] != '#' }.single()
         addNext(nextPosition, steps = steps + 1)
     }
 
@@ -65,7 +65,7 @@ private fun Racetrack.findCheats(path: FairPath, startPosition: Position, maxSte
         }
 
         if (steps < maxSteps) {
-            position.neighbors().forEach { addNext(it, steps = steps + 1) }
+            position.orthogonalNeighbors().forEach { addNext(it, steps = steps + 1) }
         }
     }
 }
@@ -74,5 +74,5 @@ private fun readInput(name: String): Racetrack = readMatrix(name)
 
 // Utils
 
-private fun Position.neighbors(condition: (Position) -> Boolean = { true }) =
-    Direction.orthogonal.asSequence().map(::nextBy).filter(condition)
+private fun Position.orthogonalNeighbors(condition: (Position) -> Boolean = { true }) =
+    neighbors(Direction.orthogonal, condition)
