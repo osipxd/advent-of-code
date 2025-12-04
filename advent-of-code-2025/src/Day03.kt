@@ -22,26 +22,31 @@ private fun part2(input: List<BatteryBank>): Long = input.sumOf { it.calculateJo
 value class BatteryBank(val batteries: List<Int>) {
 
     fun calculateJoltage(count: Int): Long {
-        val pickedBatteries = IntArray(count) { it }
-        val maxPickedIndex = pickedBatteries.lastIndex
+        var totalJoltage = 0L
 
-        fun pickBatteries(replaceIndex: Int, batteryIndex: Int) {
-            for (i in 0..maxPickedIndex - replaceIndex) pickedBatteries[replaceIndex + i] = batteryIndex + i
-        }
+        var index = 0
+        var pickedBatteryIndex = 0
+        var leftToPick = count
 
-        for ((index, battery) in batteries.withIndex().drop(1)) {
-            val spaceLeft = batteries.lastIndex - index
-            val replaceStart = (maxPickedIndex - spaceLeft).coerceAtLeast(0)
-            val replaceEnd = index.coerceAtMost(maxPickedIndex)
-            for (replaceIndex in replaceStart..replaceEnd) {
-                if (index > pickedBatteries[replaceIndex] && battery > batteries[pickedBatteries[replaceIndex]]) {
-                    pickBatteries(replaceIndex, index)
-                    break
-                }
+        while (index <= batteries.lastIndex) {
+            if (batteries[index] > batteries[pickedBatteryIndex]) pickedBatteryIndex = index
+
+            val spaceLeft = batteries.lastIndex - index + 1
+            if (spaceLeft > leftToPick) {
+                // Search further for the max battery
+                index++
+            } else {
+                // Add the picked battery
+                totalJoltage = totalJoltage * 10 + batteries[pickedBatteryIndex]
+                leftToPick--
+
+                // Reset index to the next after the picked battery
+                index = pickedBatteryIndex + 1
+                pickedBatteryIndex = index
             }
         }
 
-        return pickedBatteries.fold(0L) { acc, pickedBattery -> acc * 10 + batteries[pickedBattery] }
+        return totalJoltage
     }
 }
 
