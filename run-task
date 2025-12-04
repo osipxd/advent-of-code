@@ -1,0 +1,21 @@
+#!/bin/bash
+#
+# Runs an Advent of Code task for the specified year and day.
+#
+# Usage:
+#   ./run-task [task]
+#
+# Arguments:
+#   task - Optional. Format: YYYY/DD (e.g., 2025/01, 2025/12)
+#          If not provided, current year and day is used.
+#
+
+set -eu
+
+task=${1:-$(date +%Y)/$(date +%d)}
+year=${task%/*}
+day=${task#*/}
+
+module="advent-of-code-$year"
+class="Day${day}Kt"
+./amper run -m "$module" --main-class "$class" --working-dir "$module"
