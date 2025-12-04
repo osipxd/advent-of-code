@@ -1,5 +1,4 @@
 product: jvm/app
 
-settings:
-  jvm:
-    release: 21
+dependencies:
+  - ../advent-of-code-commons

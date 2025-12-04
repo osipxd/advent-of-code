@@ -1,1 +1,4 @@
 product: jvm/app
+
+dependencies:
+  - ../advent-of-code-commons
