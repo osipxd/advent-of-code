@@ -19,25 +19,14 @@ fun main() {
 
 private const val PAPER_ROLL = '@'
 
-private fun part1(input: Matrix<Char>): Int = input.valuePositions { it == PAPER_ROLL }.count(input::canBeAccessed)
+private fun part1(input: Matrix<Char>): Int = input.accessibleRolls().count()
+private fun part2(input: Matrix<Char>): Int = generateSequence { input.removeAccessibleRolls().takeIf { it > 0 } }.sum()
 
-private fun part2(input: Matrix<Char>): Int {
-    var totalRemovedRolls = 0
+private fun Matrix<Char>.removeAccessibleRolls() = accessibleRolls().onEach { this[it] = 'x' }.count()
+private fun Matrix<Char>.accessibleRolls() = valuePositions { it == PAPER_ROLL }.filter(::canBeAccessed)
 
-    var removedRolls = input.removeAccessibleRolls()
-    while (removedRolls > 0) {
-        totalRemovedRolls += removedRolls
-        removedRolls = input.removeAccessibleRolls()
-    }
-
-    return totalRemovedRolls
-}
-
-fun Matrix<Char>.removeAccessibleRolls(): Int =
-    valuePositions { it == PAPER_ROLL }.filter(this::canBeAccessed).onEach { this[it] = 'x' }.count()
-
-private fun Matrix<Char>.canBeAccessed(position: Position): Boolean =
-    position.neighbors { this.getOrNull(it) != PAPER_ROLL }.count() > 4
+private fun Matrix<Char>.canBeAccessed(position: Position) =
+    position.neighbors { getOrNull(it) != PAPER_ROLL }.count() > 4
 
 private fun readInput(name: String) = readMatrix(name)
 
