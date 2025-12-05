@@ -11,10 +11,10 @@ fun main() {
         measureAnswer { part1(input()) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
+    "Part 2" {
+        part2(testInput()) shouldBe 14
+        measureAnswer { part2(input()) }
+    }
 }
 
 private fun part1(input: RangesAndIngredients): Int {
@@ -22,7 +22,21 @@ private fun part1(input: RangesAndIngredients): Int {
     return ingredients.count { freshRanges.any { range -> it in range } }
 }
 
-private fun part2(input: RangesAndIngredients): Int = TODO()
+private fun part2(input: RangesAndIngredients): Long {
+    val (freshRanges) = input
+
+    var freshCount = 0L
+    var lastFresh = 0L
+    for (range in freshRanges) {
+        if (range.last <= lastFresh) continue
+        val start = maxOf(lastFresh + 1, range.first)
+        val count = range.last - start + 1
+        freshCount += count
+        lastFresh = range.last
+    }
+
+    return freshCount
+}
 
 private fun readInput(name: String): RangesAndIngredients {
     val (rawRanges, rawIngredients) = readText(name).split("\n\n")
