@@ -1,9 +1,9 @@
 #!/bin/bash
 #
-# Runs an Advent of Code task for the specified year and day.
+# Inits an Advent of Code task for the specified year and day.
 #
 # Usage:
-#   ./run-task [task]
+#   ./init-task [task]
 #
 # Arguments:
 #   task - Optional. Format: YYYY/DD (e.g., 2025/01, 2025/12)
@@ -17,5 +17,11 @@ year=${task%/*}
 day=${task#*/}
 
 module="advent-of-code-$year"
-class="Day${day}Kt"
-./amper run -m "$module" --main-class "$class" --working-dir "$module"
+filename="Day${day}"
+
+cd "$module/src"
+cp "DayX.kt" "$filename.kt"
+sed -i '' "s/DayX/$filename/g" "$filename.kt"
+
+touch "$filename.txt" "${filename}_test.txt"
+git add .
