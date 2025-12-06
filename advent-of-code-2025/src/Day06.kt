@@ -1,25 +1,26 @@
 private const val DAY = "Day06"
 
 fun main() {
-    fun testInput() = readInput("${DAY}_test")
-    fun input() = readInput(DAY)
-
     "Part 1" {
-        part1(testInput()) shouldBe 4277556
-        measureAnswer { part1(input()) }
+        fun testInput() = readHorizontalNumbers("${DAY}_test")
+        fun input() = readHorizontalNumbers(DAY)
+
+        solve(testInput()) shouldBe 4277556
+        measureAnswer { solve(input()) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
+    "Part 2" {
+        fun testInput() = readVerticalNumbers("${DAY}_test")
+        fun input() = readVerticalNumbers(DAY)
+
+        solve(testInput()) shouldBe 3263827
+        measureAnswer { solve(input()) }
+    }
 }
 
-private fun part1(input: List<Expression>): Long = input.sumOf(Expression::calculate)
+private fun solve(input: List<Expression>): Long = input.sumOf(Expression::calculate)
 
-private fun part2(input: List<Expression>): Int = TODO()
-
-private fun readInput(name: String): List<Expression> {
+private fun readHorizontalNumbers(name: String): List<Expression> {
     val lines = readLines(name)
     val spacesRegex = Regex("\\s+")
 
@@ -29,13 +30,37 @@ private fun readInput(name: String): List<Expression> {
     return operations.indices.map { index ->
         Expression(
             operands = operands.map { it[index] },
-            operation = when(operations[index]) {
-                '+' -> Long::plus
-                '*' -> Long::times
-                else -> error("Unknown operation ${operations[index]}")
-            },
+            operation = parseOperation(operations[index]),
         )
     }
+}
+
+private fun readVerticalNumbers(name: String): List<Expression> {
+    val lines = readLines(name)
+
+    val operands = lines.dropLast(1)
+    val operations = lines.last() + " |" // Just a trick to not handle the last expression differently
+
+    return buildList {
+        var operandIndex = 0
+        var index = 1
+        while (index < operations.length) {
+            if (operations[index] != ' ') {
+                val operands = List(index - operandIndex - 1) { i ->
+                    operands.map { it[operandIndex + i] }.joinToString("").trim().toLong()
+                }
+                add(Expression(operands, parseOperation(operations[operandIndex])))
+                operandIndex = index
+            }
+            index++
+        }
+    }
+}
+
+private fun parseOperation(operation: Char): (Long, Long) -> Long = when (operation) {
+    '+' -> Long::plus
+    '*' -> Long::times
+    else -> error("Unknown operation $operation")
 }
 
 private class Expression(
