@@ -23,7 +23,7 @@ private fun part1(input: TopologicalMap): Int = calculateTrailheadScores(input, 
 private fun part2(input: TopologicalMap): Int = calculateTrailheadScores(input, countAllPaths = true)
 
 private fun calculateTrailheadScores(input: TopologicalMap, countAllPaths: Boolean): Int =
-    input.valuePositions { it == LOWEST }.sumOf { trailheadScore(input, it, countAllPaths) }
+    input.positionsOf(LOWEST).sumOf { trailheadScore(input, it, countAllPaths) }
 
 private fun trailheadScore(map: TopologicalMap, trailhead: Position, countAllPaths: Boolean): Int {
     data class State(val position: Position, val height: Int)

@@ -23,7 +23,7 @@ private fun part1(input: Matrix<Char>): Int = input.accessibleRolls().count()
 private fun part2(input: Matrix<Char>): Int = generateSequence { input.removeAccessibleRolls().takeIf { it > 0 } }.sum()
 
 private fun Matrix<Char>.removeAccessibleRolls() = accessibleRolls().onEach { this[it] = 'x' }.count()
-private fun Matrix<Char>.accessibleRolls() = valuePositions { it == PAPER_ROLL }.filter(::canBeAccessed)
+private fun Matrix<Char>.accessibleRolls() = positionsOf(PAPER_ROLL).filter(::canBeAccessed)
 
 private fun Matrix<Char>.canBeAccessed(position: Position) =
     position.neighbors { getOrNull(it) != PAPER_ROLL }.count() > 4

@@ -54,7 +54,11 @@ class Matrix<T>(
 fun Matrix<*>.positions(): Sequence<Position> =
     sequence { for (row in rowIndices) for (column in columnIndices) yield(Position(row, column)) }
 
-fun <T> Matrix<T>.valuePositions(predicate: (T) -> Boolean): Sequence<Position> =
+fun <T> Matrix<T>.firstPositionOf(value: T): Position = positionsOf(value).first()
+
+fun <T> Matrix<T>.positionsOf(value: T): Sequence<Position> = valuePositions { it == value }
+
+inline fun <T> Matrix<T>.valuePositions(crossinline predicate: (T) -> Boolean): Sequence<Position> =
     positions().filter { predicate(this[it]) }
 
 fun <T> List<List<T>>.toMatrix(): Matrix<T> = Matrix(this)

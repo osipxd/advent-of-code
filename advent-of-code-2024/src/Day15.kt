@@ -48,14 +48,14 @@ private fun simulateMovements(input: Pair<WarehouseMap, List<Direction>>, tileTo
         return true
     }
 
-    var position = map.valuePositions { it == '@' }.first()
+    var position = map.firstPositionOf('@')
     for (move in movements) {
         if (tryMove(listOf(position), move)) {
             position += move
         }
     }
 
-    return map.valuePositions { it == tileToCount }.sumOf(::gpsCoordinate)
+    return map.positionsOf(tileToCount).sumOf(::gpsCoordinate)
 }
 
 private fun getMovingPositions(position: Position, tile: Char, direction: Direction) = sequence {

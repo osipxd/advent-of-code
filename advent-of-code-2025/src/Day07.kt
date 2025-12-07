@@ -35,9 +35,7 @@ private value class Diagram(private val matrix: Matrix<Char>) {
             pathsToPosition.merge(position, paths, Long::plus)
         }
 
-        val start = matrix.valuePositions { it == 'S' }.first()
-        addBeam(start, 1)
-
+        addBeam(matrix.firstPositionOf('S'), 1)
         while (beams.isNotEmpty()) {
             val beam = beams.removeFirst()
             val paths = pathsToPosition.getValue(beam)

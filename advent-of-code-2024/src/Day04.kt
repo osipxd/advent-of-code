@@ -18,14 +18,14 @@ fun main() {
 }
 
 private fun part1(input: Matrix<Char>): Int =
-    input.valuePositions { it == 'X' }.sumOf { position -> Direction.entries.count { isXmas(input, position, it) } }
+    input.positionsOf('X').sumOf { position -> Direction.entries.count { isXmas(input, position, it) } }
 
 private fun isXmas(matrix: Matrix<Char>, position: Position, direction: Direction): Boolean {
     return matrix.readWord(position, direction, length = 4) == "XMAS"
 }
 
 private fun part2(input: Matrix<Char>): Int =
-    input.valuePositions { it == 'A' }.count { position -> isX_MAS(input, position) }
+    input.positionsOf('A').count { position -> isX_MAS(input, position) }
 
 private fun isX_MAS(matrix: Matrix<Char>, position: Position): Boolean {
     val word1 = matrix.readWord(

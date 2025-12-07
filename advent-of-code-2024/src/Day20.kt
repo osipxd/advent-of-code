@@ -31,7 +31,7 @@ private fun solve(map: Racetrack, minimalCheatBonus: Int, maxCheatSteps: Int): I
 }
 
 private fun runFairly(map: Racetrack): FairPath {
-    val start = map.valuePositions { it == 'S' }.first()
+    val start = map.firstPositionOf('S')
     val path = linkedMapOf<Position, Int>()
 
     fun addNext(position: Position, steps: Int) {
