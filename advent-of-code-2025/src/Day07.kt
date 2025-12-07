@@ -11,10 +11,10 @@ fun main() {
         measureAnswer { part1(input()) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
+    "Part 2" {
+        part2(testInput()) shouldBe 40
+        measureAnswer { part2(input()) }
+    }
 }
 
 private fun part1(input: Matrix<Char>): Int {
@@ -41,6 +41,7 @@ private fun part1(input: Matrix<Char>): Int {
                 visited.add(nextPosition)
                 beams.addLast(nextPosition)
             }
+
             '^' -> visitSplitter(nextPosition)
         }
     }
@@ -48,6 +49,43 @@ private fun part1(input: Matrix<Char>): Int {
     return visitedSplitters
 }
 
-private fun part2(input: Matrix<Char>): Int = TODO()
+private fun part2(input: Matrix<Char>): Long {
+    val beams = ArrayDeque<Position>()
+    val visited = mutableSetOf<Position>()
+    val pathsToPosition = mutableMapOf<Position, Long>()
+    var totalPaths = 0L
+
+    fun visitSplitter(position: Position, paths: Long) {
+        if (!visited.add(position)) return
+
+        val leftBeam = position.nextBy(Direction.LEFT)
+        if (visited.add(leftBeam)) beams.addLast(leftBeam)
+        pathsToPosition[leftBeam] = pathsToPosition.getOrDefault(leftBeam, 0) + paths
+
+        val rightBeam = position.nextBy(Direction.RIGHT)
+        if (visited.add(rightBeam)) beams.addLast(rightBeam)
+        pathsToPosition[rightBeam] = pathsToPosition.getOrDefault(rightBeam, 0) + paths
+    }
+
+    val start = input.valuePositions { it == 'S' }.first()
+    beams.addLast(start)
+    pathsToPosition[start] = 1
+    while (beams.isNotEmpty()) {
+        val position = beams.removeFirst()
+        val paths = pathsToPosition.getValue(position)
+        val nextPosition = position.moveBy(Direction.DOWN, steps = 2)
+        when (input.getOrNull(nextPosition)) {
+            '.' -> {
+                if (visited.add(nextPosition)) beams.addLast(nextPosition)
+                pathsToPosition[nextPosition] = pathsToPosition.getOrDefault(nextPosition, 0) + paths
+            }
+
+            '^' -> visitSplitter(nextPosition, paths)
+            null -> totalPaths += paths
+        }
+    }
+
+    return totalPaths
+}
 
 private fun readInput(name: String) = readMatrix(name)
