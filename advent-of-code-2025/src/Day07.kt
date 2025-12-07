@@ -17,75 +17,50 @@ fun main() {
     }
 }
 
-private fun part1(input: Matrix<Char>): Int {
-    val beams = ArrayDeque<Position>()
-    val visited = mutableSetOf<Position>()
-    var visitedSplitters = 0
+private fun part1(input: Diagram): Int = input.simulate().visitedSplitters
+private fun part2(input: Diagram): Long = input.simulate().totalPaths
 
-    fun visitSplitter(position: Position) {
-        if (!visited.add(position)) return
+@JvmInline
+private value class Diagram(private val matrix: Matrix<Char>) {
 
-        val leftBeam = position.nextBy(Direction.LEFT)
-        val rightBeam = position.nextBy(Direction.RIGHT)
-        if (visited.add(leftBeam)) beams.addLast(leftBeam)
-        if (visited.add(rightBeam)) beams.addLast(rightBeam)
-        visitedSplitters += 1
-    }
+    fun simulate(): SimulationResult {
+        val beams = ArrayDeque<Position>()
+        val visited = mutableSetOf<Position>()
+        val pathsToPosition = mutableMapOf<Position, Long>()
+        var visitedSplitters = 0
+        var totalPaths = 0L
 
-    beams.addLast(input.valuePositions { it == 'S' }.first())
-    while (beams.isNotEmpty()) {
-        val position = beams.removeFirst()
-        val nextPosition = position.moveBy(Direction.DOWN, steps = 2)
-        when (input.getOrNull(nextPosition)) {
-            '.' -> {
-                visited.add(nextPosition)
-                beams.addLast(nextPosition)
-            }
-
-            '^' -> visitSplitter(nextPosition)
+        fun addBeam(position: Position, paths: Long) {
+            if (visited.add(position)) beams.addLast(position)
+            pathsToPosition.merge(position, paths, Long::plus)
         }
-    }
 
-    return visitedSplitters
+        val start = matrix.valuePositions { it == 'S' }.first()
+        addBeam(start, 1)
+
+        while (beams.isNotEmpty()) {
+            val beam = beams.removeFirst()
+            val paths = pathsToPosition.getValue(beam)
+            val downwardPosition = beam.moveBy(Direction.DOWN, steps = 2)
+
+            when (matrix.getOrNull(downwardPosition)) {
+                '.' -> addBeam(downwardPosition, paths)
+                '^' -> {
+                    addBeam(downwardPosition.nextBy(Direction.LEFT), paths)
+                    addBeam(downwardPosition.nextBy(Direction.RIGHT), paths)
+                    visitedSplitters++
+                }
+                null -> totalPaths += paths
+            }
+        }
+
+        return SimulationResult(visitedSplitters, totalPaths)
+    }
 }
 
-private fun part2(input: Matrix<Char>): Long {
-    val beams = ArrayDeque<Position>()
-    val visited = mutableSetOf<Position>()
-    val pathsToPosition = mutableMapOf<Position, Long>()
-    var totalPaths = 0L
+private data class SimulationResult(
+    val visitedSplitters: Int,
+    val totalPaths: Long,
+)
 
-    fun visitSplitter(position: Position, paths: Long) {
-        if (!visited.add(position)) return
-
-        val leftBeam = position.nextBy(Direction.LEFT)
-        if (visited.add(leftBeam)) beams.addLast(leftBeam)
-        pathsToPosition[leftBeam] = pathsToPosition.getOrDefault(leftBeam, 0) + paths
-
-        val rightBeam = position.nextBy(Direction.RIGHT)
-        if (visited.add(rightBeam)) beams.addLast(rightBeam)
-        pathsToPosition[rightBeam] = pathsToPosition.getOrDefault(rightBeam, 0) + paths
-    }
-
-    val start = input.valuePositions { it == 'S' }.first()
-    beams.addLast(start)
-    pathsToPosition[start] = 1
-    while (beams.isNotEmpty()) {
-        val position = beams.removeFirst()
-        val paths = pathsToPosition.getValue(position)
-        val nextPosition = position.moveBy(Direction.DOWN, steps = 2)
-        when (input.getOrNull(nextPosition)) {
-            '.' -> {
-                if (visited.add(nextPosition)) beams.addLast(nextPosition)
-                pathsToPosition[nextPosition] = pathsToPosition.getOrDefault(nextPosition, 0) + paths
-            }
-
-            '^' -> visitSplitter(nextPosition, paths)
-            null -> totalPaths += paths
-        }
-    }
-
-    return totalPaths
-}
-
-private fun readInput(name: String) = readMatrix(name)
+private fun readInput(name: String) = Diagram(readMatrix(name))
