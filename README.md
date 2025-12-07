@@ -3,8 +3,9 @@
 Welcome to my Advent of Code[^aoc] repository.
 Here I'm trying to save Xmas every year, mainly using Kotlin but sometimes with other programming languages.
 
-Each year's puzzles are placed in separated directory:
+Each year's puzzles are placed in a separated directory:
 
+- [2025](advent-of-code-2025/README.md)
 - [2024](advent-of-code-2024/README.md)
 - [2023](advent-of-code-2023/README.md)
 - [2022](advent-of-code-2022/README.md)
