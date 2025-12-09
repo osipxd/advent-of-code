@@ -9,10 +9,10 @@ fun main() {
         measureAnswer { part1(input(), maxConnections = 1000) }
     }
 
-    //"Part 2" {
-    //    part2(testInput()) shouldBe 0
-    //    measureAnswer { part2(input()) }
-    //}
+    "Part 2" {
+        part2(testInput()) shouldBe 25272
+        measureAnswer { part2(input()) }
+    }
 }
 
 private fun part1(input: List<Point>, maxConnections: Int): Int {
@@ -23,11 +23,21 @@ private fun part1(input: List<Point>, maxConnections: Int): Int {
 
     return dsu.sizes()
         .sortedDescending()
-        .printValue()
         .take(3)
         .reduce(Int::times)
+}
 
-    // ^ 1324800
+private fun part2(input: List<Point>): Long {
+    val closestPairs = input.findClosestPairs()
+
+    val dsu = DisjointSetUnion(input.size)
+    for ((from, to) in closestPairs) {
+        if (dsu.union(from, to) == input.size) {
+            return input[from].x.toLong() * input[to].x.toLong()
+        }
+    }
+
+    error("No solution found")
 }
 
 private fun List<Point>.findClosestPairs(): List<Pair<Int, Int>> {
@@ -43,8 +53,6 @@ private fun List<Point>.findClosestPairs(): List<Pair<Int, Int>> {
         .sortedBy { it.third }
         .map { it.first to it.second }
 }
-
-private fun part2(input: List<Point>): Int = TODO()
 
 private data class Point(val x: Int, val y: Int, val z: Int) {
     override fun toString(): String = "($x, $y, $z)"
@@ -62,7 +70,7 @@ private class DisjointSetUnion(size: Int) {
         return findRoot(parents[element]).also { parents[element] = it }
     }
 
-    fun union(a: Int, b: Int) {
+    fun union(a: Int, b: Int): Int {
         var rootA = findRoot(a)
         var rootB = findRoot(b)
         if (rootA != rootB) {
@@ -70,6 +78,7 @@ private class DisjointSetUnion(size: Int) {
             parents[rootB] = rootA
             size[rootA] += size[rootB]
         }
+        return size[rootA]
     }
 
     fun sizes() = roots().map { size[it] }
