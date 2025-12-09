@@ -16,10 +16,12 @@ fun main() {
 }
 
 private fun part1(input: List<Point>, maxConnections: Int): Int {
-    val closestPairs = input.findClosestPairs()
-
+    val connections = input.findConnections()
     val dsu = DisjointSetUnion(input.size)
-    for ((from, to) in closestPairs.take(maxConnections)) dsu.union(from, to)
+
+    for ((from, to) in connections.take(maxConnections)) {
+        dsu.union(from, to)
+    }
 
     return dsu.sizes()
         .sortedDescending()
@@ -28,37 +30,27 @@ private fun part1(input: List<Point>, maxConnections: Int): Int {
 }
 
 private fun part2(input: List<Point>): Long {
-    val closestPairs = input.findClosestPairs()
-
+    val connections = input.findConnections()
     val dsu = DisjointSetUnion(input.size)
-    for ((from, to) in closestPairs) {
+
+    for ((from, to) in connections) {
         if (dsu.union(from, to) == input.size) {
-            return input[from].x.toLong() * input[to].x.toLong()
+            return input[from].x.toLong() * input[to].x
         }
     }
 
     error("No solution found")
 }
 
-private fun List<Point>.findClosestPairs(): List<Pair<Int, Int>> {
-    val allPairs = mutableListOf<Triple<Int, Int, Long>>()
-    for (from in indices) {
-        for (to in (from + 1)..lastIndex) {
-            val distance = this[from].squaredDistanceTo(this[to])
-            allPairs.add(Triple(from, to, distance))
+private fun List<Point>.findConnections(): List<Pair<Int, Int>> {
+    val points = this
+    return buildList {
+        for (from in indices) for (to in (from + 1)..lastIndex) {
+            add(Triple(from, to, points[from].squaredDistanceTo(points[to])))
         }
     }
-
-    return allPairs
-        .sortedBy { it.third }
-        .map { it.first to it.second }
-}
-
-private data class Point(val x: Int, val y: Int, val z: Int) {
-    override fun toString(): String = "($x, $y, $z)"
-
-    fun squaredDistanceTo(other: Point): Long =
-        (other.x - this.x).pow2() + (other.y - this.y).pow2() + (other.z - this.z).pow2()
+        .sortedBy { (_, _, distance) -> distance }
+        .map { (from, to) -> from to to }
 }
 
 private class DisjointSetUnion(size: Int) {
@@ -92,5 +84,12 @@ private fun readInput(name: String) = readLines(name) {
 }
 
 // Utils
+
+private data class Point(val x: Int, val y: Int, val z: Int) {
+    override fun toString(): String = "($x, $y, $z)"
+
+    fun squaredDistanceTo(other: Point): Long =
+        (other.x - this.x).pow2() + (other.y - this.y).pow2() + (other.z - this.z).pow2()
+}
 
 private fun Int.pow2(): Long = this.toLong() * this
